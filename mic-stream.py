@@ -7,7 +7,7 @@ import sys
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--device", type=int, default=None)
-parser.add_argument("--samplerate", type=int, default=44100)
+parser.add_argument("--samplerate", type=int, default=8000)
 parser.add_argument("--blocksize", type=int, default=1024)
 
 args = parser.parse_args()
