@@ -1,74 +1,49 @@
+# plot-stream.py
+
 import sys
+import numpy as np
 import matplotlib.pyplot as plt
-from collections import deque
-import argparse
 
+FS = 44100
+BLOCKSIZE = 1024
 
-def main():
-    parser = argparse.ArgumentParser()
+plt.ion()
 
-    parser.add_argument(
-        "--samples",
-        type=int,
-        default=300,
-        help="Number of displayed measurements"
-    )
+fig, ax = plt.subplots()
 
-    parser.add_argument(
-        "--max-amplitude",
-        type=float,
-        default=0.6,
-        help="Maximum y-axis amplitude"
-    )
+x = np.arange(BLOCKSIZE) / FS * 1000  # ms
+y = np.zeros(BLOCKSIZE)
 
-    args = parser.parse_args()
+line, = ax.plot(x, y)
 
-    values = deque(
-        [0.0] * args.samples,
-        maxlen=args.samples
-    )
+ax.set_xlim(0, x[-1])
+ax.set_ylim(-1, 1)
 
-    plt.ion()
+ax.set_xlabel("Time [ms]")
+ax.set_ylabel("Amplitude")
+ax.set_title("Live microphone waveform")
 
-    fig, ax = plt.subplots()
+ax.grid(True)
 
-    line, = ax.plot(
-        range(args.samples),
-        values
-    )
-
-    ax.set_xlim(0, args.samples - 1)
-    ax.set_ylim(0, args.max_amplitude)
-
-    ax.set_xlabel("Measurement")
-    ax.set_ylabel("RMS amplitude")
-    ax.set_title("Raspberry Pi microphone")
-
-    ax.grid(True)
+for stdin_line in sys.stdin:
 
     try:
-        for input_line in sys.stdin:
+        samples = np.fromstring(stdin_line, sep=" ")
 
-            input_line = input_line.strip()
+        if len(samples) == 0:
+            continue
 
-            if not input_line:
-                continue
+        # Hvis blocksize ændrer sig
+        if len(samples) != len(x):
+            x = np.arange(len(samples)) / FS * 1000
 
-            try:
-                value = float(input_line)
-            except ValueError:
-                continue
+            line.set_xdata(x)
+            ax.set_xlim(0, x[-1])
 
-            values.append(value)
+        line.set_ydata(samples)
 
-            line.set_ydata(values)
-
-            fig.canvas.draw_idle()
-            fig.canvas.flush_events()
+        fig.canvas.draw_idle()
+        fig.canvas.flush_events()
 
     except KeyboardInterrupt:
-        pass
-
-
-if __name__ == "__main__":
-    main()
+        break
