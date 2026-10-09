@@ -8,22 +8,18 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include "dataProcessing.h"
 
-struct MoveCommand {
-    double x;   // linear velocity along the robot's forward x-axis
-    double z;   // angular velocity around the vertical z-axis (positive = left)
-};
 
 class DataExecution {
 public:
-    DataExecution();  
-    DataExecution(int xVelocity, int zVelocity);
-    void moveRobot(int xVelocity, int zVelocity);                     
+    DataExecution(float xVelocity = 0.0f, float zVelocity = 0.0f);
+    void moveRobot(float xVelocity, float zVelocity);
     ~DataExecution() = default;
 
 private:
-  
-    std::shared_ptr<rclcpp::Node> node_; //ROS node 
-    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_; // Publisher for sending movement commands
+    float xVelocity;
+    float zVelocity;
+    std::shared_ptr<rclcpp::Node> node_;
+    rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_;
 };
 
 #endif // DATAEXECUTION_H

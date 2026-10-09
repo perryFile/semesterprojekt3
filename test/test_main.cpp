@@ -1,26 +1,35 @@
 // test_main.cpp
-#include <iostream>
+#include <rclcpp/rclcpp.hpp>
+#include <thread>
+#include <chrono>
 #include <vector>
 #include <cstdint>
 #include "dataProcessing.h"
+#include "dataExecution.h"
 
-int main() {
+
+int main(int argc, char** argv) {
+    rclcpp::init(argc, argv);
+
     const int uRobotID = 1;
-    const int tRobotID = 2;
-    const int uRobotID2 = 3;
-    const int tRobotID2 = 4;
+    std::vector<std::int32_t> data = {1, 0, 1, 10};
 
-    // robotID 1, angle 90 -> 0x05A -> dele 0, 5, 10
-    std::vector<std::int32_t> data = {1, 0, 5, 10};
+    DataProcessing dataP(data);
+    float xVel = 0.1f;
+    float zVel = dataP.getZVelocity(uRobotID);
 
-    DataProcessing dataProcessor(data);
+    
+    DataExecution dataE(xVel, zVel);
 
-    std::cout << "Angle for robot " << uRobotID << ": "
-              << dataProcessor.getAngle(uRobotID) << "\n";   // expected 90
-    std::cout << "Angle for robot " << uRobotID2 << ": "
-              << dataProcessor.getAngle(uRobotID2) << "\n";   // expected 0 (wrong ID)
-    std::cout << "z velocity: " << dataProcessor.getZVelocity(1) << "\n";
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
+    dataE.moveRobot(xVel, zVel);
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
+    dataE.moveRobot(0.0f, 0.0f);   // stop the robot
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    
+
+    rclcpp::shutdown();
     return 0;
 }
