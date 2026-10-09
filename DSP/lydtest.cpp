@@ -126,6 +126,6 @@ void play_sequence(
 }
 
 int main() {
-    play_sequence("3", 0.04, 0.4);
+    play_sequence("12651D", 0.04, 0.04);
     return 0;
 }

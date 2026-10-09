@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <vector>
 #include <stdexcept>
+#include "init.h"
 
 # define M_PI           3.14159265358979323846
 
@@ -109,14 +110,6 @@ void DSP::fileFromData(std::string filename, const std::vector<float>& data) {
     }
 }
 
-void DSP::toFile(std::string filename, std::vector<double> data) {
-    //Vi bruger til at gemme mData i en data.txt fil.
-    std::ofstream file(filename);
-    for(auto i : data){
-        file << i << '\n';
-    }
-}
-
 std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf) {
     return goertzel(mData, N, fs, useDtmf);
 }
@@ -129,17 +122,14 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
     else{
         mFrek = mFrek2;
     }
-    //Vector med bin værdier oprettes
-    std::vector<int> k_freks = {};
-    //Bin værdier beregnes og tilføjes til vektoren.
-    for(double f: mFrek){
-        k_freks.push_back(round(f/fs*N));
-    }
+    
+    std::vector<double> omega_frek;
+    std::vector<double> denFrek;
 
-    //Vi beregner denummerator for hver bin værdi.
-    std::vector<double> denFrek = {};
-    for(int k: k_freks){
-        denFrek.push_back(-2*cos(2*M_PI*k/N));
+    for(double f : mFrek){
+        double omega = 2*M_PI*f/fs;
+        omega_frek.push_back(omega);
+        denFrek.push_back(-2*cos(omega));
     }
 
     //Vector for output Y for forskellige frekvenser oprettes.
@@ -161,8 +151,15 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
     //Magnitude beregnes for hver frekvens ved formlen: sqrt(s[N-1]²+s[N-2]² -2*cos(omega_K)*s[N-1]*s[N-2])
     //Hvor omega_K = vinkelfrekvens = 2*pi*k/N
     std::vector<double> magnitude = {};
-    for (int i =0; i<mFrek.size();i++){
-        magnitude.push_back(sqrt(pow(Y[i][N+1],2) + pow(Y[i][N],2) - 2*cos(2*M_PI*k_freks[i]/N)*Y[i][N+1]*Y[i][N]));
+
+    for (int i = 0; i < mFrek.size(); i++) {
+        magnitude.push_back(
+            sqrt(
+                pow(Y[i][N+1], 2) +
+                pow(Y[i][N], 2) -
+                2*cos(omega_frek[i])*Y[i][N+1]*Y[i][N]
+            )
+        );
     }
 
     //Laver den til en single side spectrum.
@@ -174,11 +171,11 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
 
 }
 
-int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
+int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     //Bruges til at finde hvilken dtmf tone der matcher magnitude spektrummet.
     //Finder højste og næste højeste værdi i magnitude
-
-    double threshold = sum(magnitude)/5; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
+    //magnitude = power2magnitude(magnitude);
+    double threshold = sum(magnitude)/20; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
     std::vector<std::vector<int>> dtmf;
     std::vector<int> mFrek;
     if(useDtmf){
@@ -193,18 +190,19 @@ int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
     if (magnitude.size() < 2 || magnitude.size() != mFrek.size()) {
         return -1;
     }
-    auto first = std::max_element(magnitude.begin(), magnitude.end());
+    // Find største magnitude blandt de første 8 frekvenser
+    auto first = std::max_element(magnitude.begin(), magnitude.begin()+4);
+
+    // Find største magnitude blandt de sidste 8 frekvenser
+    auto second = std::max_element(magnitude.begin()+4, magnitude.end());
+
+    // Find indeks
     int index1 = std::distance(magnitude.begin(), first);
-    auto second = std::max_element(magnitude.begin(), first);
-    auto second2 = std::max_element(first + 1, magnitude.end());
-
-    if (second == first || (second2 != magnitude.end() && *second2 > *second))
-        second = second2;
-
     int index2 = std::distance(magnitude.begin(), second);
 
     int frek1 = mFrek[index1];
     int frek2 = mFrek[index2];
+    
     if (magnitude[index1] < threshold || magnitude[index2] < threshold || magnitude[index1] < 0.002 || magnitude[index2] < 0.002) {
         return -1; // Returner -1 hvis ingen af de to højeste værdier er over threshold
     }
@@ -220,61 +218,45 @@ int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
     return -1;
 }
 
-std::vector<std::vector<double>> DSP::window(int blocksize, int hopSize, double fs, bool useDtmf) {
-    std::vector<std::vector<double>> windowMagnitude;
-
-    if (blocksize <= 0 || hopSize <= 0) {
-        throw std::invalid_argument("Invalid window parameters");
-    }
-
-    for (size_t n = 0; n + blocksize <= mData.size(); n += hopSize) {
-
-        std::vector<float> dataWindow(
-            mData.begin() + n,
-            mData.begin() + n + blocksize
-        );
-
-        windowMagnitude.push_back(goertzel(dataWindow, blocksize, fs, useDtmf));
-    }
-
-    return windowMagnitude;
-}
-
-double DSP::sum(const std::vector<double> &vec) {
-    double total = 0;
-    for (double num : vec) {
-        total += num;
-    }
-    return total;
-}
-
-void DSP::waitForEnergy() {
-    //Funktion bruges til at vente på at der er energi i signalet.
-    bool energyDetected = false;
-    std::vector<double> magnitude;
-    while (!energyDetected) {
-        Gathering();
-        magnitude = goertzel(20, 8000, true);
-        if (sum(magnitude) > 0.5) { // Threshold for energy detection
-            energyDetected = true;
-        }
-    }
-}
-
-
 void DSP::listen(int samplerate, int blocksize, int nIdBits) {
 
+    // Indstillinger for sliding window
     const int WINDOW_SIZE = samplerate * 40 / 1000;
     const int HOP_SIZE = samplerate * 10 / 1000;
     const int END_WINDOWS = 3;
 
+    std::vector<std::vector<float>> data = {};
+
+    // Kontroller parametre
     if (samplerate <= 0 || blocksize <= 0 ||
-        WINDOW_SIZE <= 0 || HOP_SIZE <= 0 ||
+        WINDOW_SIZE < 2 || HOP_SIZE <= 0 ||
         nIdBits <= 0 ||
         channel != 1 || blocksize != this->blocksize) {
         throw std::invalid_argument("Invalid parameters");
     }
 
+    // ----------------------------------------
+    // Beregn Hann-vinduet én gang
+    // ----------------------------------------
+    std::vector<double> hann(WINDOW_SIZE);
+
+    double windowSum = 0;
+
+    for (int n = 0; n < WINDOW_SIZE; n++) {
+
+        hann[n] = 0.5 * (
+            1 - cos(2 * M_PI * n / (WINDOW_SIZE - 1))
+        );
+
+        windowSum += hann[n];
+    }
+
+    // Korrektionsfaktor for Hann-vinduets dæmpning
+    const double correctionFactor = WINDOW_SIZE / windowSum;
+
+    // ----------------------------------------
+    // State machine
+    // ----------------------------------------
     enum class State {
         WAIT_ID,
         LISTEN
@@ -294,25 +276,42 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
 
     while (true) {
 
+        // Indsaml nye samples
         Gathering();
+        data.push_back(mData);
 
-        // Gem originale samples
-        //fileFromData("data.txt", mData);
+        // Gem originale samples, hvis ønsket
+        // fileFromData("data.txt", mData);
 
+        // Tilføj nye samples til buffer
         audioBuffer.insert(
             audioBuffer.end(),
             mData.begin(),
             mData.end()
         );
 
+        // ----------------------------------------
+        // Sliding window
+        // ----------------------------------------
         while (audioBuffer.size() >=
                static_cast<size_t>(WINDOW_SIZE)) {
 
+            // Opret aktuelt analysevindue
             std::vector<float> dataWindow(
                 audioBuffer.begin(),
                 audioBuffer.begin() + WINDOW_SIZE
             );
 
+            // ----------------------------------------
+            // Anvend Hann-vinduet
+            // ----------------------------------------
+            for (int n = 0; n < WINDOW_SIZE; n++) {
+                dataWindow[n] *= hann[n];
+            }
+
+            // ----------------------------------------
+            // Beregn Goertzel
+            // ----------------------------------------
             std::vector<double> magnitude =
                 goertzel(
                     dataWindow,
@@ -321,9 +320,17 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
                     true
                 );
 
+            // Korriger amplitude efter Hann
+            for (double& m : magnitude) {
+                m *= correctionFactor;
+            }
+
+            // Find DTMF-tone
             int tone = getTone(magnitude, true);
 
+            // ----------------------------------------
             // STATE 1: Vent på ID
+            // ----------------------------------------
             if (state == State::WAIT_ID) {
 
                 if (tone == 1) {
@@ -335,15 +342,18 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
 
                 if (numStartBits >= nIdBits) {
 
-                    std::cout << "ID modtaget! Starter datamodtagelse."
-                              << std::endl;
+                    std::cout
+                        << "ID modtaget! Starter datamodtagelse."
+                        << std::endl;
 
                     state = State::LISTEN;
                     numStartBits = 0;
                 }
             }
 
+            // ----------------------------------------
             // STATE 2: Modtag data
+            // ----------------------------------------
             else if (state == State::LISTEN) {
 
                 // Ignorer resterende vinduer med ID-tonen
@@ -356,28 +366,43 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
 
                     toner.push_back(tone);
 
-                    if (tone == 16) {
+                    // Undersøg om sluttonen er modtaget
+                    if (tone == 9) {
                         endCount++;
                     }
                     else {
                         endCount = 0;
                     }
 
+                    // Sluttone bekræftet
                     if (endCount >= END_WINDOWS) {
 
-                        std::cout << "Sluttone modtaget!"
-                                  << std::endl;
+                        std::cout
+                            << "Sluttone modtaget!"
+                            << std::endl;
 
-                        //toFile("toner.txt", toner);
-                        for(double t : toner) {
+                        // Gem toner i fil
+                        // toFile("toner.txt", toner);
+
+                        // Udskriv toner til terminalen
+                        for (double t : toner) {
                             std::cout << t << " ";
                         }
+
+                        std::cout << std::endl;
+                        std::cout << "Data gemt i filen data.txt" << std::endl;
+                        for (const std::vector<float>& samples : data) {
+                            fileFromData("data.txt", samples);
+                        }
+
                         return;
                     }
                 }
             }
 
-            // Sliding window
+            // ----------------------------------------
+            // Flyt sliding window
+            // ----------------------------------------
             audioBuffer.erase(
                 audioBuffer.begin(),
                 audioBuffer.begin() + HOP_SIZE
