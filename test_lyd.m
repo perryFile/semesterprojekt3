@@ -1,20 +1,16 @@
 clear; clc; close all;
 
 % Indlæs data
-data = readmatrix("DSP/data.txt");
+data = readmatrix("DSP/build/data.txt");
 
 Y = fft(data);
 N = size(data,1);
 % Samplingfrekvens
 fs = 8000;
+blocksize = 80;
+numBlocks = floor(length(data)/blockSize);
+f = (0:floor(blockSize/2))*fs/blockSize;
 
-f = fs/N*(0:N-1);
-
-% Antal samples
-N = length(data);
-
-% Tidsakse
-t = (0:N-1)/fs;
 
 % Plot
 figure;

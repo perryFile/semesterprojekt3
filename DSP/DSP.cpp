@@ -1,94 +1,127 @@
 #include "DSP.h"
 #include <fstream>
 #include <iostream>
-#include "../portaudio/include/portaudio.h"
 #include <cmath>
 #include <algorithm>
+#include <string>
+#include <stdexcept>
+
+#include <cstdint>
+#include <vector>
+#include <stdexcept>
 
 # define M_PI           3.14159265358979323846
 
-DSP::DSP() {
-    
-
+DSP::~DSP() {
+    // Stop og luk streamen
+    if (stream) {
+        Pa_StopStream(stream);
+        Pa_CloseStream(stream);
+    }
+    // Afslut PortAudio
+    Pa_Terminate();
 }
 
-void DSP::Gathering(int blocksize, int samplerate, int channel) {
-    //Funktion bruges til at åbne mikrofon op og gemme en mængde data i mData vectoren.
-    const int fs = samplerate;
-    const int blockSize = blocksize;
-    const int channels = channel;
 
-    PaStream* stream = nullptr;
-
-    // Initialiser PortAudio
-    PaError err = Pa_Initialize();
-
+DSP::DSP(int blockSize, int samplerate, int channels)
+    : stream(nullptr),
+      blocksize(blockSize),
+      channel(channels)
+{   
+    err = Pa_Initialize();
     if (err != paNoError) {
-        std::cerr << Pa_GetErrorText(err) << std::endl;
-        return;
+        throw std::runtime_error(Pa_GetErrorText(err));
     }
 
-    // Åbn mikrofonen
+    PaDeviceIndex device = Pa_GetDefaultInputDevice();
+
+    if (device == paNoDevice) {
+        throw std::runtime_error("Ingen mikrofon fundet!");
+    }
+
+    const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
+    
     err = Pa_OpenDefaultStream(
         &stream,
-        channels,
+        channel,
         0,
         paFloat32,
-        fs,
-        blockSize,
+        samplerate,
+        blocksize,
         nullptr,
         nullptr
     );
 
     if (err != paNoError) {
-        std::cerr << Pa_GetErrorText(err) << std::endl;
         Pa_Terminate();
-        return;
+        throw std::runtime_error(Pa_GetErrorText(err));
     }
 
-    // Start optagelsen
     err = Pa_StartStream(stream);
 
     if (err != paNoError) {
-        std::cerr << Pa_GetErrorText(err) << std::endl;
         Pa_CloseStream(stream);
+        stream = nullptr;
         Pa_Terminate();
-        return;
+        throw std::runtime_error(Pa_GetErrorText(err));
     }
 
-    // Alloker plads til samples
-    mData.resize(blockSize * channels);
+    mData.resize(blocksize * channel);
+}
+
+void DSP::Gathering() {
+    //Funktion bruges til at gemme en mængde data i mData vectoren.
 
     // Indsaml samples
     err = Pa_ReadStream(
         stream,
         mData.data(),
-        blockSize
+        blocksize
     );
-
     if (err != paNoError) {
         std::cerr << Pa_GetErrorText(err) << std::endl;
     }
 
-    // Stop optagelsen
-    Pa_StopStream(stream);
-    Pa_CloseStream(stream);
-    Pa_Terminate();
 }
-
 std::vector<float> DSP::dataReturn() {
     return mData;
 }
 
-void DSP::fileFromData(){
+void DSP::fileFromData(std::string filename) {
+    fileFromData(filename, mData); // Skriv mData til fil
+}
+
+void DSP::fileFromData(std::string filename, const std::vector<float>& data) {
+    static bool firstTime = true;
+
+    std::ofstream file;
+
+    if (firstTime) {
+        file.open(filename, std::ios::trunc);
+        firstTime = false;
+    }
+    else {
+        file.open(filename, std::ios::app);
+    }
+
+    for (float sample : data) {
+        file << sample << '\n';
+    }
+}
+
+void DSP::toFile(std::string filename, std::vector<double> data) {
     //Vi bruger til at gemme mData i en data.txt fil.
-    std::ofstream file("data.txt");
-    for(float i : mData){
+    std::ofstream file(filename);
+    for(auto i : data){
         file << i << '\n';
     }
 }
 
-std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
+std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf) {
+    return goertzel(mData, N, fs, useDtmf);
+}
+
+std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, bool useDtmf){
     std::vector<int> mFrek;
     if(useDtmf){
         mFrek = mFrek1;
@@ -118,7 +151,7 @@ std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
     for(int i : mFrek){
         int n = 0;
         std::vector<double> y = {0,0};
-        for(double x : mData){
+        for(double x : data){
             y.push_back((x-denFrek[nn]*y[n+1]-y[n])); //Formel: y(n) = x-a*y(n-1)-y(n-2)
             n++;
         }
@@ -144,6 +177,8 @@ std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
 int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
     //Bruges til at finde hvilken dtmf tone der matcher magnitude spektrummet.
     //Finder højste og næste højeste værdi i magnitude
+
+    double threshold = sum(magnitude)/5; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
     std::vector<std::vector<int>> dtmf;
     std::vector<int> mFrek;
     if(useDtmf){
@@ -170,6 +205,9 @@ int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
 
     int frek1 = mFrek[index1];
     int frek2 = mFrek[index2];
+    if (magnitude[index1] < threshold || magnitude[index2] < threshold || magnitude[index1] < 0.002 || magnitude[index2] < 0.002) {
+        return -1; // Returner -1 hvis ingen af de to højeste værdier er over threshold
+    }
 
     //Finder hvilken dtmf tone der matcher de to højeste magnitude.
     for (int i = 0; i < dtmf.size(); i++) {
@@ -180,4 +218,170 @@ int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
     }
 
     return -1;
+}
+
+std::vector<std::vector<double>> DSP::window(int blocksize, int hopSize, double fs, bool useDtmf) {
+    std::vector<std::vector<double>> windowMagnitude;
+
+    if (blocksize <= 0 || hopSize <= 0) {
+        throw std::invalid_argument("Invalid window parameters");
+    }
+
+    for (size_t n = 0; n + blocksize <= mData.size(); n += hopSize) {
+
+        std::vector<float> dataWindow(
+            mData.begin() + n,
+            mData.begin() + n + blocksize
+        );
+
+        windowMagnitude.push_back(goertzel(dataWindow, blocksize, fs, useDtmf));
+    }
+
+    return windowMagnitude;
+}
+
+double DSP::sum(const std::vector<double> &vec) {
+    double total = 0;
+    for (double num : vec) {
+        total += num;
+    }
+    return total;
+}
+
+void DSP::waitForEnergy() {
+    //Funktion bruges til at vente på at der er energi i signalet.
+    bool energyDetected = false;
+    std::vector<double> magnitude;
+    while (!energyDetected) {
+        Gathering();
+        magnitude = goertzel(20, 8000, true);
+        if (sum(magnitude) > 0.5) { // Threshold for energy detection
+            energyDetected = true;
+        }
+    }
+}
+
+
+void DSP::listen(int samplerate, int blocksize, int nIdBits) {
+
+    const int WINDOW_SIZE = samplerate * 40 / 1000;
+    const int HOP_SIZE = samplerate * 10 / 1000;
+    const int END_WINDOWS = 3;
+
+    if (samplerate <= 0 || blocksize <= 0 ||
+        WINDOW_SIZE <= 0 || HOP_SIZE <= 0 ||
+        nIdBits <= 0 ||
+        channel != 1 || blocksize != this->blocksize) {
+        throw std::invalid_argument("Invalid parameters");
+    }
+
+    enum class State {
+        WAIT_ID,
+        LISTEN
+    };
+
+    State state = State::WAIT_ID;
+
+    std::vector<float> audioBuffer;
+    std::vector<double> toner;
+
+    int numStartBits = 0;
+    int endCount = 0;
+
+    bool ignoreID = true;
+
+    std::cout << "Venter på ID..." << std::endl;
+
+    while (true) {
+
+        Gathering();
+
+        // Gem originale samples
+        //fileFromData("data.txt", mData);
+
+        audioBuffer.insert(
+            audioBuffer.end(),
+            mData.begin(),
+            mData.end()
+        );
+
+        while (audioBuffer.size() >=
+               static_cast<size_t>(WINDOW_SIZE)) {
+
+            std::vector<float> dataWindow(
+                audioBuffer.begin(),
+                audioBuffer.begin() + WINDOW_SIZE
+            );
+
+            std::vector<double> magnitude =
+                goertzel(
+                    dataWindow,
+                    WINDOW_SIZE,
+                    samplerate,
+                    true
+                );
+
+            int tone = getTone(magnitude, true);
+
+            // STATE 1: Vent på ID
+            if (state == State::WAIT_ID) {
+
+                if (tone == 1) {
+                    numStartBits++;
+                }
+                else {
+                    numStartBits = 0;
+                }
+
+                if (numStartBits >= nIdBits) {
+
+                    std::cout << "ID modtaget! Starter datamodtagelse."
+                              << std::endl;
+
+                    state = State::LISTEN;
+                    numStartBits = 0;
+                }
+            }
+
+            // STATE 2: Modtag data
+            else if (state == State::LISTEN) {
+
+                // Ignorer resterende vinduer med ID-tonen
+                if (ignoreID && tone == 1) {
+                    // Gør ingenting
+                }
+                else {
+
+                    ignoreID = false;
+
+                    toner.push_back(tone);
+
+                    if (tone == 16) {
+                        endCount++;
+                    }
+                    else {
+                        endCount = 0;
+                    }
+
+                    if (endCount >= END_WINDOWS) {
+
+                        std::cout << "Sluttone modtaget!"
+                                  << std::endl;
+
+                        //toFile("toner.txt", toner);
+                        for(double t : toner) {
+                            std::cout << t << " ";
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Sliding window
+            audioBuffer.erase(
+                audioBuffer.begin(),
+                audioBuffer.begin() + HOP_SIZE
+            );
+        }
+    }
 }

@@ -4,15 +4,42 @@
 #include "../portaudio/include/portaudio.h"
 
 
-int main(){
-    DSP dsp;
 
-    dsp.Gathering(1024,8000,1); //1 channel = mono lyd
-    std::vector<float> data = dsp.dataReturn();
-    std::vector<double> magnitude = dsp.goertzel(1024,8000, false);
-    int i = dsp.getTone(magnitude, false);
-    std::cout << i << std::endl;
-    dsp.fileFromData();
-    
-    
+// int main(){
+//     DSP dsp(220, 8000, 1);
+//     int i = 0;
+//     std::vector<double> toner = {};
+//     for(int j = 0; j < 200; j++) {
+//         dsp.Gathering(); //1 channel = mono lyd
+//         std::vector<double> magnitude = dsp.goertzel(220, 8000, true);
+//         i = dsp.getTone(magnitude);
+//         toner.push_back(i);
+//         dsp.fileFromData("data.txt");
+//     }
+
+//     dsp.toFile("toner.txt", toner);
+// }
+
+
+
+// int main(){
+//     DSP dsp(800, 8000, 1);
+//     int i = 0;
+//     std::vector<double> toner = {};
+//     for(int j = 0; j < 100; j++) {
+//         dsp.Gathering(); //1 channel = mono lyd
+//         std::vector<std::vector<double>> windowMagnitude = dsp.window(700, 20, 8000, true);
+//         for(const auto& magnitude : windowMagnitude) {
+//             i = dsp.getTone(magnitude);
+//             toner.push_back(i);
+//         }
+//         dsp.fileFromData("data.txt");
+//     }
+
+//     dsp.toFile("toner.txt", toner);
+// }
+
+int main(){
+    DSP dsp(800, 8000, 1);
+    dsp.listen(8000, 800, 6);
 }
