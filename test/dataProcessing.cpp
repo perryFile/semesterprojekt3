@@ -76,3 +76,29 @@ float DataProcessing::convertAngleData(const std::vector<std::int32_t>& rawAngle
     // "3E8" -> 1000
     return static_cast<float>(std::stoi(hexAngle, nullptr, 16));
 }
+
+std::optional<bool> DataProcessing::typeControl(const std::vector<std::int32_t>& inputData) const {
+    if (inputData.size() == UDP_PacketSize) return false;   // UDP
+    if (inputData.size() == TCP_PacketSize) return true;    // TCP
+    return std::nullopt;                                    // ugyldig længde
+}
+//Passer robotID med om pakken der er sendt er en TCP eller UDP
+bool DataProcessing::isValidPacket(int robotID, const std::vector<std::int32_t>& inputData){
+    //False = UDP, true = TCP, tom = ugyldig længde
+    const auto type = typeControl(inputData); 
+    
+    for (std::size_t i = 0; i < robotIDtype.size(); i++) {
+        if (robotIDtype[i].robotNr == robotID) {          
+            const bool robotType = robotIDtype[i].type; 
+
+            if (robotType == *type) {
+                
+                return true;    
+            }
+            return false;       
+        }
+    }
+
+    return false;              
+    
+}
