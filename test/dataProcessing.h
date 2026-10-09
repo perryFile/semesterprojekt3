@@ -2,6 +2,7 @@
 #ifndef DATAPROCESSING_H
 #define DATAPROCESSING_H
 
+// Nødvendige libraries
 #include <cstdint>
 #include <algorithm>
 #include <istream>
