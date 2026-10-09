@@ -97,10 +97,10 @@ end
 %% Square magnitudes BEFORE calculating thresholds
 
 % Without Hann
-magnitudesNormal = magnitudesNormal.^2;
+magnitudesNormal = magnitudesNormal;
 
 % With Hann
-magnitudesHann = magnitudesHann.^2;
+magnitudesHann = magnitudesHann;
 
 %% Calculate thresholds from squared magnitudes
 

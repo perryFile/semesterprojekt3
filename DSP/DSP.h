@@ -9,7 +9,7 @@
 
 class DSP {
     public:
-        DSP(int blockSize, int samplerate, int channels);
+        DSP(int blockSize, int samplerate, int channels, std::vector<int> ID);
         ~DSP(); 
         void Gathering();
         std::vector<float> dataReturn();
@@ -19,7 +19,7 @@ class DSP {
         std::vector<double> goertzel(int blocksize, double fs, bool useDtmf = true);
         std::vector<double> goertzel(std::vector<float> data, int blocksize, double fs, bool useDtmf = true);
         int getTone(std::vector<double> &magnitude, bool useDtmf = true);
-        void listen(int samplerate, int blocksize, int nIdBits);
+        void listen(int samplerate, int blocksize);
 
     private:
         std::vector<float> mData;
@@ -31,6 +31,7 @@ class DSP {
         int blocksize; 
         int channel;
         PaStream* stream;
+        std::vector<int> ID = {};
 };
 
 #endif // DSP_H
