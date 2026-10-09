@@ -17,8 +17,7 @@ class DataExecution {
 public:
     DataExecution();  
     DataExecution(int xVelocity, int zVelocity);
-    void moveRobot();                     
-    void executeCommand(std::vector<std::int32_t> commands); 
+    void moveRobot(int xVelocity, int zVelocity);                     
     ~DataExecution() = default;
 
 private:
