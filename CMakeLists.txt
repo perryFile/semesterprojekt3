@@ -9,6 +9,7 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 add_executable(turtlebot_node
+    test/dataExecution.cpp
     test/dataProcessing.cpp
     test/test_main.cpp
 )
