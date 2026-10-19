@@ -20,3 +20,5 @@ void DataExecution::executeCommand(int commandIndex) {
 
     pub_->publish(twist_msg);
 }
+
+DataExecution::~DataExecution() {}

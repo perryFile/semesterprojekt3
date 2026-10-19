@@ -17,6 +17,7 @@ class DataExecution {
 public:
     DataExecution();                        
     void executeCommand(int commandIndex); 
+    ~DataExecution() = default;
 
 private:
     // Index in the vector = command number received in the data field

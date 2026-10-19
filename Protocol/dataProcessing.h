@@ -9,8 +9,13 @@
 
 class DataProcessing {
     public:
-
+    DataProcessing(){};
+    int getCommand(int ID,std::vector<std::int32_t>& data);
+    ~DataProcessing() = default;
+    
     private: 
+    int stopbit = 16; 
+    
 
 }
 

@@ -9,8 +9,9 @@
 
 class DataCollection {
     public: 
-
-
+    DataCollection(){};
+    std::vector<std::int32_t> getData(std::vector<std::int32_t>& data);
+    ~DataCollection() = default;
 
     private: 
 
