@@ -1,12 +1,21 @@
 #include "DSP.h"
 #include <fstream>
 #include <iostream>
-#include "../portaudio/include/portaudio.h"
 #include <cmath>
 #include <algorithm>
 #include <string>
 
 # define M_PI           3.14159265358979323846
+
+DSP::~DSP() {
+    // Stop og luk streamen
+    if (stream) {
+        Pa_StopStream(stream);
+        Pa_CloseStream(stream);
+    }
+    // Afslut PortAudio
+    Pa_Terminate();
+}
 
 DSP::DSP(int blockSize, int samplerate, int channels) : err(Pa_Initialize()), stream(nullptr), blocksize(blockSize), channel(channels) {
 
@@ -16,7 +25,8 @@ DSP::DSP(int blockSize, int samplerate, int channels) : err(Pa_Initialize()), st
     if (err != paNoError) {
         std::cerr << Pa_GetErrorText(err) << std::endl;
         return;
-    }   PaStream* stream = nullptr;
+    }   
+
 
     // Åbn mikrofonen
     err = Pa_OpenDefaultStream(
@@ -35,13 +45,6 @@ DSP::DSP(int blockSize, int samplerate, int channels) : err(Pa_Initialize()), st
         Pa_Terminate();
         return;
     }
-
-}
-
-void DSP::Gathering() {
-    //Funktion bruges til at gemme en mængde data i mData vectoren.
-    stream = nullptr;
-
     // Start optagelsen
     err = Pa_StartStream(stream);
 
@@ -51,9 +54,13 @@ void DSP::Gathering() {
         Pa_Terminate();
         return;
     }
-
     // Alloker plads til samples
     mData.resize(blocksize * channel);
+
+}
+
+void DSP::Gathering() {
+    //Funktion bruges til at gemme en mængde data i mData vectoren.
 
     // Indsaml samples
     err = Pa_ReadStream(
@@ -66,10 +73,6 @@ void DSP::Gathering() {
         std::cerr << Pa_GetErrorText(err) << std::endl;
     }
 
-    // Stop optagelsen
-    Pa_StopStream(stream);
-    Pa_CloseStream(stream);
-    Pa_Terminate();
 }
 
 std::vector<float> DSP::dataReturn() {

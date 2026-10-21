@@ -1,6 +1,7 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include "../portaudio/include/portaudio.h"
 
 #ifndef  DSP_H
 #define DSP_H
@@ -9,7 +10,7 @@
 class DSP {
     public:
         DSP(int blockSize, int samplerate, int channels);
-        virtual ~DSP() = default; 
+        ~DSP(); 
         void Gathering();
         std::vector<float> dataReturn();
         void fileFromData(std::string filename);
