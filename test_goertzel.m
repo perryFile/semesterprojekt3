@@ -5,7 +5,7 @@ clear all;
 N = 1024;
 fs = 8000;
 t = (0:1:N-1)/fs; % Sampling rate and time vector
-yDTMF = readmatrix("DSP/data.txt");
+yDTMF = readmatrix("DSP/build/data.txt");
 
 k697 = round(697/fs*N);
 k770 = round(770/fs*N);

@@ -5,14 +5,17 @@
 
 
 int main(){
-    DSP dsp(1024, 8000, 1);
+    DSP dsp(240, 8000, 1);
     int i = 0;
     std::vector<double> toner = {};
-    for(int j = 0; j < 1; j++) {
+    for(int j = 0; j < 200; j++) {
         dsp.Gathering(); //1 channel = mono lyd
-        std::vector<double> magnitude = dsp.goertzel(1024,8000);
+        std::vector<double> magnitude = dsp.goertzel(240,8000);
+
         i = dsp.getTone(magnitude);
         toner.push_back(i);
+        dsp.fileFromData("data.txt");
     }
+
     dsp.toFile("toner.txt", toner);
 }

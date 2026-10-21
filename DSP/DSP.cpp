@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <stdexcept>
 
 # define M_PI           3.14159265358979323846
 
@@ -17,46 +18,51 @@ DSP::~DSP() {
     Pa_Terminate();
 }
 
-DSP::DSP(int blockSize, int samplerate, int channels) : err(Pa_Initialize()), stream(nullptr), blocksize(blockSize), channel(channels) {
 
-
-    // Initialiser PortAudio
-
+DSP::DSP(int blockSize, int samplerate, int channels)
+    : stream(nullptr),
+      blocksize(blockSize),
+      channel(channels)
+{   
+    err = Pa_Initialize();
     if (err != paNoError) {
-        std::cerr << Pa_GetErrorText(err) << std::endl;
-        return;
-    }   
+        throw std::runtime_error(Pa_GetErrorText(err));
+    }
 
+    PaDeviceIndex device = Pa_GetDefaultInputDevice();
 
-    // Åbn mikrofonen
+    if (device == paNoDevice) {
+        throw std::runtime_error("Ingen mikrofon fundet!");
+    }
+
+    const PaDeviceInfo* info = Pa_GetDeviceInfo(device);
+    
     err = Pa_OpenDefaultStream(
         &stream,
-        channels,
+        channel,
         0,
         paFloat32,
         samplerate,
-        blockSize,
+        blocksize,
         nullptr,
         nullptr
     );
 
     if (err != paNoError) {
-        std::cerr << Pa_GetErrorText(err) << std::endl;
         Pa_Terminate();
-        return;
+        throw std::runtime_error(Pa_GetErrorText(err));
     }
-    // Start optagelsen
+
     err = Pa_StartStream(stream);
 
     if (err != paNoError) {
-        std::cerr << Pa_GetErrorText(err) << std::endl;
         Pa_CloseStream(stream);
+        stream = nullptr;
         Pa_Terminate();
-        return;
+        throw std::runtime_error(Pa_GetErrorText(err));
     }
-    // Alloker plads til samples
-    mData.resize(blocksize * channel);
 
+    mData.resize(blocksize * channel);
 }
 
 void DSP::Gathering() {
@@ -68,21 +74,28 @@ void DSP::Gathering() {
         mData.data(),
         blocksize
     );
-
     if (err != paNoError) {
         std::cerr << Pa_GetErrorText(err) << std::endl;
     }
 
 }
-
 std::vector<float> DSP::dataReturn() {
     return mData;
 }
 
 void DSP::fileFromData(std::string filename) {
-    //Vi bruger til at gemme mData i en data.txt fil.
-    std::ofstream file(filename);
-    for(float i : mData){
+    static bool firstTime = true;
+
+    std::ofstream file;
+
+    if (firstTime) {
+        file.open(filename, std::ios::trunc); // Slet eksisterende indhold
+        firstTime = false;
+    } else {
+        file.open(filename, std::ios::app);   // Tilføj til eksisterende indhold
+    }
+
+    for (float i : mData) {
         file << i << '\n';
     }
 }
