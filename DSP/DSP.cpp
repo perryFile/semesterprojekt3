@@ -8,25 +8,15 @@
 
 # define M_PI           3.14159265358979323846
 
-DSP::DSP() {
-    
-}
+DSP::DSP(int blockSize, int samplerate, int channels) : err(Pa_Initialize()), stream(nullptr), blocksize(blockSize), channel(channels) {
 
-void DSP::Gathering(int blocksize, int samplerate, int channel) {
-    //Funktion bruges til at åbne mikrofon op og gemme en mængde data i mData vectoren.
-    const int fs = samplerate;
-    const int blockSize = blocksize;
-    const int channels = channel;
-
-    PaStream* stream = nullptr;
 
     // Initialiser PortAudio
-    PaError err = Pa_Initialize();
 
     if (err != paNoError) {
         std::cerr << Pa_GetErrorText(err) << std::endl;
         return;
-    }
+    }   PaStream* stream = nullptr;
 
     // Åbn mikrofonen
     err = Pa_OpenDefaultStream(
@@ -34,7 +24,7 @@ void DSP::Gathering(int blocksize, int samplerate, int channel) {
         channels,
         0,
         paFloat32,
-        fs,
+        samplerate,
         blockSize,
         nullptr,
         nullptr
@@ -45,6 +35,12 @@ void DSP::Gathering(int blocksize, int samplerate, int channel) {
         Pa_Terminate();
         return;
     }
+
+}
+
+void DSP::Gathering() {
+    //Funktion bruges til at gemme en mængde data i mData vectoren.
+    stream = nullptr;
 
     // Start optagelsen
     err = Pa_StartStream(stream);
@@ -57,13 +53,13 @@ void DSP::Gathering(int blocksize, int samplerate, int channel) {
     }
 
     // Alloker plads til samples
-    mData.resize(blockSize * channels);
+    mData.resize(blocksize * channel);
 
     // Indsaml samples
     err = Pa_ReadStream(
         stream,
         mData.data(),
-        blockSize
+        blocksize
     );
 
     if (err != paNoError) {
