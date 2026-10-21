@@ -1,17 +1,22 @@
 #include <vector>
 #include <fstream>
+#include <string>
 
 #ifndef  DSP_H
 #define DSP_H
+
+
 class DSP {
     public:
         DSP();
         virtual ~DSP() = default; 
         void Gathering(int blocksize, int samplerate, int channel);
         std::vector<float> dataReturn();
-        void fileFromData();
+        void fileFromData(std::string filename);
+        void toFile(std::string filename, std::vector<double> data);
         std::vector<double> goertzel(int N, double fs, bool useDtmf = true);
         int getTone(const std::vector<double> &magnitude, bool useDtmf = true);
+        double sum(const std::vector<double> &vec);
 
     private:
         std::vector<float> mData;

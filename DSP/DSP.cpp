@@ -4,12 +4,12 @@
 #include "../portaudio/include/portaudio.h"
 #include <cmath>
 #include <algorithm>
+#include <string>
 
 # define M_PI           3.14159265358979323846
 
 DSP::DSP() {
     
-
 }
 
 void DSP::Gathering(int blocksize, int samplerate, int channel) {
@@ -80,10 +80,18 @@ std::vector<float> DSP::dataReturn() {
     return mData;
 }
 
-void DSP::fileFromData(){
+void DSP::fileFromData(std::string filename) {
     //Vi bruger til at gemme mData i en data.txt fil.
-    std::ofstream file("data.txt");
+    std::ofstream file(filename);
     for(float i : mData){
+        file << i << '\n';
+    }
+}
+
+void DSP::toFile(std::string filename, std::vector<double> data) {
+    //Vi bruger til at gemme mData i en data.txt fil.
+    std::ofstream file(filename);
+    for(auto i : data){
         file << i << '\n';
     }
 }
@@ -141,9 +149,19 @@ std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
 
 }
 
+double DSP::sum(const std::vector<double> &vec) {
+    double total = 0;
+    for (double num : vec) {
+        total += num;
+    }
+    return total;
+}
+
 int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
     //Bruges til at finde hvilken dtmf tone der matcher magnitude spektrummet.
     //Finder højste og næste højeste værdi i magnitude
+
+    double threshold = sum(magnitude)/4; // Laver en threshold værdi som er 1/4 af summen af magnitude. Dette bruges til at filtrere støj væk.
     std::vector<std::vector<int>> dtmf;
     std::vector<int> mFrek;
     if(useDtmf){
@@ -170,6 +188,9 @@ int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
 
     int frek1 = mFrek[index1];
     int frek2 = mFrek[index2];
+    if (magnitude[index1] < threshold || magnitude[index2] < threshold) {
+        return -1; // Returner -1 hvis ingen af de to højeste værdier er over threshold
+    }
 
     //Finder hvilken dtmf tone der matcher de to højeste magnitude.
     for (int i = 0; i < dtmf.size(); i++) {
