@@ -226,7 +226,7 @@ std::vector<std::vector<double>> DSP::window(int blocksize, int hopSize, double 
         );
 
         windowMagnitude.push_back(goertzel(dataWindow, blocksize, fs, useDtmf));
-    }s
+    }
 
     return windowMagnitude;
 }
