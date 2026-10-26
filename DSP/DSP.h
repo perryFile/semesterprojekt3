@@ -15,7 +15,9 @@ class DSP {
         std::vector<float> dataReturn();
         void fileFromData(std::string filename);
         void toFile(std::string filename, std::vector<double> data);
-        std::vector<double> goertzel(int N, double fs, bool useDtmf = true);
+        std::vector<double> goertzel(int blocksize, double fs, bool useDtmf = true);
+        std::vector<double> goertzel(std::vector<float> data, int blocksize, double fs, bool useDtmf = true);
+        std::vector<std::vector<double>> window(int blocksize, int hopSize, double fs, bool useDtmf = true);
         int getTone(const std::vector<double> &magnitude, bool useDtmf = true);
         double sum(const std::vector<double> &vec);
 

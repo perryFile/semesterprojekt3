@@ -108,7 +108,11 @@ void DSP::toFile(std::string filename, std::vector<double> data) {
     }
 }
 
-std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
+std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf) {
+    return goertzel(mData, N, fs, useDtmf);
+}
+
+std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, bool useDtmf){
     std::vector<int> mFrek;
     if(useDtmf){
         mFrek = mFrek1;
@@ -138,7 +142,7 @@ std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
     for(int i : mFrek){
         int n = 0;
         std::vector<double> y = {0,0};
-        for(double x : mData){
+        for(double x : data){
             y.push_back((x-denFrek[nn]*y[n+1]-y[n])); //Formel: y(n) = x-a*y(n-1)-y(n-2)
             n++;
         }
@@ -159,14 +163,6 @@ std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf){
     
     return magnitude;
 
-}
-
-double DSP::sum(const std::vector<double> &vec) {
-    double total = 0;
-    for (double num : vec) {
-        total += num;
-    }
-    return total;
 }
 
 int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
@@ -213,4 +209,32 @@ int DSP::getTone(const std::vector<double>& magnitude, bool useDtmf) {
     }
 
     return -1;
+}
+
+std::vector<std::vector<double>> DSP::window(int blocksize, int hopSize, double fs, bool useDtmf) {
+    std::vector<std::vector<double>> windowMagnitude;
+
+    if (blocksize <= 0 || hopSize <= 0) {
+        throw std::invalid_argument("Invalid window parameters");
+    }
+
+    for (size_t n = 0; n + blocksize <= mData.size(); n += hopSize) {
+
+        std::vector<float> dataWindow(
+            mData.begin() + n,
+            mData.begin() + n + blocksize
+        );
+
+        windowMagnitude.push_back(goertzel(dataWindow, blocksize, fs, useDtmf));
+    }s
+
+    return windowMagnitude;
+}
+
+double DSP::sum(const std::vector<double> &vec) {
+    double total = 0;
+    for (double num : vec) {
+        total += num;
+    }
+    return total;
 }
