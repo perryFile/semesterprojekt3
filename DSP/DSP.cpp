@@ -261,42 +261,22 @@ void DSP::waitForEnergy() {
     }
 }
 
-void DSP::listen(int samplerate, int blocksize) {
-    //Funktion bruges til at lytte efter en tone og udskrive den til terminalen.
-    //std::cout << "Lytter efter tone..." << std::endl;
-    int sluttone = 16;
-    int tone = 0;
-    std::vector<double> toner = {};
-    while(tone != sluttone){
-        Gathering(); 
-        std::vector<double> magnitude = goertzel(blocksize, samplerate, true);
-        tone = getTone(magnitude);
-        toner.push_back(tone);
-        fileFromData("data.txt");
-    }
-    toFile("toner.txt", toner);
-}
 
+void DSP::listen(int samplerate, int blocksize, int nIdBits) {
 
-void DSP::initStart(int samplerate, int blocksize, int nIdBits, float timeout) {
-
-    // 40 ms analysevindue og 10 ms hop
     const int WINDOW_SIZE = samplerate * 40 / 1000;
     const int HOP_SIZE = samplerate * 10 / 1000;
+    const int END_WINDOWS = 3;
 
     if (samplerate <= 0 || blocksize <= 0 ||
         WINDOW_SIZE <= 0 || HOP_SIZE <= 0 ||
-        nIdBits <= 0 || timeout <= 0 ||
+        nIdBits <= 0 ||
         channel != 1 || blocksize != this->blocksize) {
         throw std::invalid_argument("Invalid parameters");
     }
 
-    const std::uint64_t timeoutSamples =
-        static_cast<std::uint64_t>(timeout * samplerate);
-
     enum class State {
         WAIT_ID,
-        WAIT_PAUSE,
         LISTEN
     };
 
@@ -308,24 +288,23 @@ void DSP::initStart(int samplerate, int blocksize, int nIdBits, float timeout) {
     int numStartBits = 0;
     int endCount = 0;
 
-    std::uint64_t samplePosition = 0;
-    std::uint64_t firstIdEnd = 0;
+    bool ignoreID = true;
 
-    std::cout << "Venter på startsignal..." << std::endl;
+    std::cout << "Venter på ID..." << std::endl;
 
     while (true) {
 
-        // Indsaml nye samples
         Gathering();
 
-        // Tilføj dem til den eksisterende buffer
+        // Gem originale samples
+        //fileFromData("data.txt", mData);
+
         audioBuffer.insert(
             audioBuffer.end(),
             mData.begin(),
             mData.end()
         );
 
-        // Analyser alle komplette vinduer
         while (audioBuffer.size() >=
                static_cast<size_t>(WINDOW_SIZE)) {
 
@@ -344,10 +323,7 @@ void DSP::initStart(int samplerate, int blocksize, int nIdBits, float timeout) {
 
             int tone = getTone(magnitude, true);
 
-            std::uint64_t frameEnd =
-                samplePosition + WINDOW_SIZE;
-
-            // STATE 1: Vent på tone 1
+            // STATE 1: Vent på ID
             if (state == State::WAIT_ID) {
 
                 if (tone == 1) {
@@ -359,75 +335,53 @@ void DSP::initStart(int samplerate, int blocksize, int nIdBits, float timeout) {
 
                 if (numStartBits >= nIdBits) {
 
-                    std::cout << "ID modtaget!" << std::endl;
-
-                    state = State::WAIT_PAUSE;
-                    numStartBits = 0;
-                    firstIdEnd = frameEnd;
-                }
-            }
-
-            // STATE 2: Vent på pause
-            else if (state == State::WAIT_PAUSE) {
-
-                if (frameEnd - firstIdEnd > timeoutSamples) {
-
-                    std::cout << "Timeout!" << std::endl;
-
-                    state = State::WAIT_ID;
-                    numStartBits = 0;
-                }
-                else {
-
-                    if (tone == -1) {
-                        numStartBits++;
-                    }
-                    else {
-                        numStartBits = 0;
-                    }
-
-                    if (numStartBits >= nIdBits) {
-
-                        std::cout << "Startsignal modtaget!"
-                                  << std::endl;
-
-                        state = State::LISTEN;
-                        numStartBits = 0;
-                    }
-                }
-            }
-
-            // STATE 3: Modtag DTMF
-            else if (state == State::LISTEN) {
-                toner.push_back(tone);
-
-                if (tone == 16) {
-                    endCount++;
-                }
-                else {
-                    endCount = 0;
-                }
-
-                // Bekræft sluttonen i 3 vinduer
-                if (endCount >= 1) {
-
-                    std::cout << "Sluttone modtaget!"
+                    std::cout << "ID modtaget! Starter datamodtagelse."
                               << std::endl;
 
-                    toFile("toner.txt", toner);
-
-                    return;
+                    state = State::LISTEN;
+                    numStartBits = 0;
                 }
             }
 
-            // Fjern kun HOP_SIZE samples
+            // STATE 2: Modtag data
+            else if (state == State::LISTEN) {
+
+                // Ignorer resterende vinduer med ID-tonen
+                if (ignoreID && tone == 1) {
+                    // Gør ingenting
+                }
+                else {
+
+                    ignoreID = false;
+
+                    toner.push_back(tone);
+
+                    if (tone == 16) {
+                        endCount++;
+                    }
+                    else {
+                        endCount = 0;
+                    }
+
+                    if (endCount >= END_WINDOWS) {
+
+                        std::cout << "Sluttone modtaget!"
+                                  << std::endl;
+
+                        //toFile("toner.txt", toner);
+                        for(double t : toner) {
+                            std::cout << t << " ";
+                        }
+                        return;
+                    }
+                }
+            }
+
+            // Sliding window
             audioBuffer.erase(
                 audioBuffer.begin(),
                 audioBuffer.begin() + HOP_SIZE
             );
-
-            samplePosition += HOP_SIZE;
-            fileFromData("data.txt", dataWindow); // Gem det aktuelle vindue til fil
         }
     }
 }

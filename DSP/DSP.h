@@ -21,8 +21,7 @@ class DSP {
         std::vector<std::vector<double>> window(int blocksize, int hopSize, double fs, bool useDtmf = true);
         int getTone(const std::vector<double> &magnitude, bool useDtmf = true);
         double sum(const std::vector<double> &vec);
-        void initStart(int samplerate, int blocksize, int nIdBits, float timeout);
-        void listen(int samplerate, int blocksize);
+        void listen(int samplerate, int blocksize, int nIdBits);
         void waitForEnergy();
 
     private:
