@@ -3,7 +3,7 @@ clear;
 clc;
 
 %% Parameters
-N = 80;
+N = 320;
 fs = 8000;
 
 yDTMF = readmatrix("DSP/build/data.txt");
@@ -37,7 +37,7 @@ for blockNum = 1:numBlocks
     end
 
     magnitudes(blockNum,:) = 2*magnitudes(blockNum,:)/N;
-    thresholds(blockNum) = sum(magnitudes(blockNum,:))/4;
+    thresholds(blockNum) = sum(magnitudes(blockNum,:))/5;
 
 end
 

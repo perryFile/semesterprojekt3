@@ -5,7 +5,7 @@ data = readmatrix("DSP/build/data.txt");
 data = data(:);
 
 fs = 8000;
-blockSize = 80;
+blockSize = 320;
 
 numBlocks = floor(length(data)/blockSize);
 f = (0:floor(blockSize/2))*fs/blockSize;
