@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Opret executable
 add_executable(maintest
     maintest.cpp
+    init.cpp
     DSP.cpp
 )
 

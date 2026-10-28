@@ -3,7 +3,7 @@ clear;
 clc;
 
 %% Parameters
-N = 320;
+N = 350;
 fs = 8000;
 
 yDTMF = readmatrix("DSP/build/data.txt");
