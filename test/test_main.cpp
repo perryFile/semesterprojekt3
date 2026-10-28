@@ -12,7 +12,7 @@ int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
 
     const int uRobotID = 1;
-    std::vector<std::int32_t> data = {1, 0, 1, 10};
+    std::vector<std::int32_t> data = {1, 0, 1, 11};
 
     DataProcessing dataP(data);
     float xVel = 0.1f;
