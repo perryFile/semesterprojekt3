@@ -24,10 +24,11 @@ DSP::~DSP() {
 }
 
 
-DSP::DSP(int blockSize, int samplerate, int channels)
+
+DSP::DSP(int blockSize, int samplerate, int channels, std::vector<int> ID)
     : stream(nullptr),
       blocksize(blockSize),
-      channel(channels)
+      channel(channels), ID(ID)
 {   
     err = Pa_Initialize();
     if (err != paNoError) {
@@ -174,7 +175,6 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
 int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     //Bruges til at finde hvilken dtmf tone der matcher magnitude spektrummet.
     //Finder højste og næste højeste værdi i magnitude
-    //magnitude = power2magnitude(magnitude);
     double threshold = sum(magnitude)/20; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
     std::vector<std::vector<int>> dtmf;
     std::vector<int> mFrek;
@@ -218,12 +218,16 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     return -1;
 }
 
-void DSP::listen(int samplerate, int blocksize, int nIdBits) {
+void DSP::listen(int samplerate, int blocksize) {
 
     // Indstillinger for sliding window
     const int WINDOW_SIZE = samplerate * 40 / 1000;
     const int HOP_SIZE = samplerate * 10 / 1000;
     const int END_WINDOWS = 3;
+    int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
+
+    const int UdpBlockAmount = 7;
+    const int TcpBlockAmount = 10;
 
     std::vector<std::vector<float>> data = {};
 
@@ -267,10 +271,13 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
     std::vector<float> audioBuffer;
     std::vector<double> toner;
 
-    int numStartBits = 0;
+    int numStartBitsUDP = 0;
+    int numStartBitsTCP = 0;
     int endCount = 0;
 
-    bool ignoreID = true;
+    int numberOfBlocks = 0;
+    int numberOfBlocksWanted = 0;
+
 
     std::cout << "Venter på ID..." << std::endl;
 
@@ -289,6 +296,25 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
             mData.begin(),
             mData.end()
         );
+
+        //Bruges til at stoppe modtagelsen af data når der er modtaget 6 blokke.
+        if(state == State::LISTEN){
+            numberOfBlocks++;
+            if(numberOfBlocks >= numberOfBlocksWanted) {
+                // Udskriv toner til terminalen
+                for (double t : toner) {
+                    std::cout << t << " ";
+                }
+ 1 1 1 1 1 1 1 5 6 6 6 6 2 6 2 2 2 2 2 2 2 2 10 10 10 10 10 10 10 -1 10 -1 
+                std::cout << std::endl;
+                std::cout << "Data gemt i filen data.txt" << std::endl;
+                for (const std::vector<float>& samples : data) {
+                    fileFromData("data.txt", samples);
+                }
+
+                return;
+            }
+        }
 
         // ----------------------------------------
         // Sliding window
@@ -332,22 +358,19 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
             // STATE 1: Vent på ID
             // ----------------------------------------
             if (state == State::WAIT_ID) {
+                toner.push_back(tone);
 
-                if (tone == 1) {
-                    numStartBits++;
+                if (tone == ID[0]) {
+                    numStartBitsUDP++;
+                    numberOfBlocksWanted = UdpBlockAmount;
+                } else if(tone == ID[1]) {
+                    numStartBitsTCP++;
+                    numberOfBlocksWanted = TcpBlockAmount;
                 }
-                else {
-                    numStartBits = 0;
-                }
 
-                if (numStartBits >= nIdBits) {
-
-                    std::cout
-                        << "ID modtaget! Starter datamodtagelse."
-                        << std::endl;
-
+                if (numStartBitsUDP >= nIdBits || numStartBitsTCP >= nIdBits) {
                     state = State::LISTEN;
-                    numStartBits = 0;
+
                 }
             }
 
@@ -355,50 +378,9 @@ void DSP::listen(int samplerate, int blocksize, int nIdBits) {
             // STATE 2: Modtag data
             // ----------------------------------------
             else if (state == State::LISTEN) {
-
-                // Ignorer resterende vinduer med ID-tonen
-                if (ignoreID && tone == 1) {
-                    // Gør ingenting
-                }
-                else {
-
-                    ignoreID = false;
-
                     toner.push_back(tone);
-
-                    // Undersøg om sluttonen er modtaget
-                    if (tone == 9) {
-                        endCount++;
-                    }
-                    else {
-                        endCount = 0;
-                    }
-
-                    // Sluttone bekræftet
-                    if (endCount >= END_WINDOWS) {
-
-                        std::cout
-                            << "Sluttone modtaget!"
-                            << std::endl;
-
-                        // Gem toner i fil
-                        // toFile("toner.txt", toner);
-
-                        // Udskriv toner til terminalen
-                        for (double t : toner) {
-                            std::cout << t << " ";
-                        }
-
-                        std::cout << std::endl;
-                        std::cout << "Data gemt i filen data.txt" << std::endl;
-                        for (const std::vector<float>& samples : data) {
-                            fileFromData("data.txt", samples);
-                        }
-
-                        return;
-                    }
                 }
-            }
+            
 
             // ----------------------------------------
             // Flyt sliding window

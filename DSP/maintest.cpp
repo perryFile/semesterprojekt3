@@ -40,6 +40,6 @@
 // }
 
 int main(){
-    DSP dsp(350, 8000, 1);
-    dsp.listen(8000, 350, 3);
+    DSP dsp(379, 8000, 1, {1, 2});
+    dsp.listen(8000, 379);
 }
