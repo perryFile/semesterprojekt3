@@ -20,17 +20,21 @@ class DataProcessing {
 public:
     DataProcessing();
     explicit DataProcessing(const std::vector<std::int32_t>& inputData);
-    
+
     bool checkId(int robotID, const std::vector<std::int32_t>& data) const;
     float getAngle(int robotID) const;
     float getXVelocity() const;
     float getZVelocity(int robotID) const;
     float convertAngleData(const std::vector<std::int32_t>& rawAngle) const;
-    std::optional<bool> typeControl(const std::vector<std::int32_t>& inputData) const; 
+    std::optional<bool> typeControl(const std::vector<std::int32_t>& inputData) const;
     bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData);
+    bool crcCheck(const std::vector<std::int32_t>& inputData) const;
+
     ~DataProcessing() = default;
 
 private:
+    static std::uint8_t crc8(const std::vector<std::int32_t>& data, std::size_t count);
+
     //skal 100% omnavngives
     const std::vector<RobotPacketType> robotIDtype = {
         {0, false},  // id 0: robot 1, UDP
@@ -46,8 +50,8 @@ private:
     std::vector<std::int32_t> rawAngle;
     float angle = 0.00f;
     float xVelocity = 0.22f;
-    static constexpr float maxAngle     = 360.0f;  
-    static constexpr float maxZVelocity = 0.22f; 
+    static constexpr float maxAngle     = 360.0f;
+    static constexpr float maxZVelocity = 0.22f;
 };
 
 #endif // DATAPROCESSING_H

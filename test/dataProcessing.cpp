@@ -65,7 +65,7 @@ float DataProcessing::convertAngleData(const std::vector<std::int32_t>& rawAngle
             hexAngle += std::to_string(rawAngle[i]);
         }
         else {
-            return 0.0f;   
+            return 0.0f;
         }
     }
 
@@ -82,23 +82,76 @@ std::optional<bool> DataProcessing::typeControl(const std::vector<std::int32_t>&
     if (inputData.size() == TCP_PacketSize) return true;    // TCP
     return std::nullopt;                                    // ugyldig længde
 }
-//Passer robotID med om pakken der er sendt er en TCP eller UDP
-bool DataProcessing::isValidPacket(int robotID, const std::vector<std::int32_t>& inputData){
-    //False = UDP, true = TCP, tom = ugyldig længde
-    const auto type = typeControl(inputData); 
-    
-    for (std::size_t i = 0; i < robotIDtype.size(); i++) {
-        if (robotIDtype[i].robotNr == robotID) {          
-            const bool robotType = robotIDtype[i].type; 
 
-            if (robotType == *type) {
-                
-                return true;    
+//Passer robotID med om pakken der er sendt er en TCP eller UDP
+bool DataProcessing::isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) {
+    //False = UDP, true = TCP, tom = ugyldig længde
+    const auto type = typeControl(inputData);
+    if (!type) return false;
+
+    for (std::size_t i = 0; i < robotIDtype.size(); i++) {
+        if (robotIDtype[i].robotNr == robotID) {
+            const bool robotType = robotIDtype[i].type;
+
+            if (robotType != *type) {
+                return false;   // forkert pakketype til dette ID
             }
-            return false;       
+
+            // Kun TCP-pakker har en CRC
+            return *type ? crcCheck(inputData) : true;
         }
     }
 
-    return false;              
-    
+    return false;
+}
+
+// CRC-8: poly 0x07, init 0x00, no reflection, no xorout.
+// Hver tone er sin egen byte (0-15)
+// Argumenter: 
+// data: Data fra vores toner 
+// count: Antallet af bytes som ikke er CRC8 værdier
+std::uint8_t DataProcessing::crc8(const std::vector<std::int32_t>& data, std::size_t count) {
+    const std::uint8_t POLYNOMIAL = 0x07;   // Divisoren i CRC8
+    const std::uint8_t TOP_BIT    = 0x80;   // 10000000
+
+    std::uint8_t crc = 0x00;                // start value
+
+    // Vi går igennem værdierne en ad gangen
+    for (std::size_t i = 0; i < count; i++) {
+
+        // Tilføj den aktuelle tone til crc
+        std::uint8_t tone = static_cast<std::uint8_t>(data[i]);
+        crc ^= tone;
+
+        // 2. Gå igennem hver bit i den aktuelle byte
+        for (int bit = 0; bit < 8; bit++) {
+
+            // Gem værdien af af leftmost bit inden vi shifter mod venstre 
+            bool topBitIsSet = (crc & TOP_BIT) != 0;
+
+            // Shift alting mod venstre så vi går videre til den næste bit
+            crc = static_cast<std::uint8_t>(crc << 1);
+
+            // Hvis vi mistede en bit så tilføj den til crc 
+            if (topBitIsSet) {
+                crc ^= POLYNOMIAL;
+            }
+        }
+    }
+
+    return crc;
+}
+// Last two tones = CRC (first one is the most significant digit).
+// Everything before them is covered by the CRC.
+bool DataProcessing::crcCheck(const std::vector<std::int32_t>& inputData) const {
+    if (inputData.size() < 3) return false;
+
+    for (std::int32_t t : inputData) {
+        if (t < 0 || t > 15) return false;      // invalid tone
+    }
+
+    const std::size_t payloadLen = inputData.size() - 2;
+    const int received = inputData[payloadLen] * 16 + inputData[payloadLen + 1];
+
+    return crc8(inputData, payloadLen) == received;
 }
