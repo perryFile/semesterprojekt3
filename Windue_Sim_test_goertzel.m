@@ -3,12 +3,12 @@ clear;
 clc;
 
 %% Parameters
-fs = 8000;
+fs = 16000;
 
 WINDOW_SIZE = floor(fs * 40 / 1000);  % 40 ms = 320 samples
 HOP_SIZE = floor(fs * 10 / 1000);     % 10 ms = 80 samples
 
-yDTMF = readmatrix("DSP/build/data.txt");
+yDTMF = readmatrix("DSP/Data_test_dtmf/data9.txt");
 yDTMF = yDTMF(:);
 
 % DTMF frequencies

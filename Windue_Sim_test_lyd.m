@@ -1,10 +1,10 @@
 clear; clc; close all;
 
 %% Indlæs data
-data = readmatrix("DSP/build/data.txt");
+data = readmatrix("DSP/Data_test_dtmf/data9.txt");
 data = data(:);
 
-fs = 8000;
+fs = 16000;
 
 %% Sliding window indstillinger (samme som C++)
 WINDOW_SIZE = floor(fs * 40 / 1000);  % 40 ms = 320 samples

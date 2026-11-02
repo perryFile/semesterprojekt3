@@ -226,8 +226,8 @@ void DSP::listen(int samplerate, int blocksize) {
     const int END_WINDOWS = 3;
     int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
 
-    const int UdpBlockAmount = 7;
-    const int TcpBlockAmount = 10;
+    const int UdpBlockAmount = 15;
+    const int TcpBlockAmount = 19;
 
     std::vector<std::vector<float>> data = {};
 
@@ -305,7 +305,6 @@ void DSP::listen(int samplerate, int blocksize) {
                 for (double t : toner) {
                     std::cout << t << " ";
                 }
- 1 1 1 1 1 1 1 5 6 6 6 6 2 6 2 2 2 2 2 2 2 2 10 10 10 10 10 10 10 -1 10 -1 
                 std::cout << std::endl;
                 std::cout << "Data gemt i filen data.txt" << std::endl;
                 for (const std::vector<float>& samples : data) {
