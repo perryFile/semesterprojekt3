@@ -2,11 +2,13 @@
 #ifndef DATAPROCESSING_H
 #define DATAPROCESSING_H
 
-#include <cstdint>
+#include <array>
 #include <algorithm>
-#include <istream>
+#include <cstddef>
+#include <cstdint>
+#include <map>
 #include <optional>
-#include <sstream>
+#include <queue>
 #include <string>
 #include <vector>
 #include "physicalLayer.h"
@@ -16,19 +18,28 @@ struct RobotPacketType {
     bool type;   // 0/False = UDP, 1/True = TCP
 };
 
+struct TcpPacket {
+int robotID;
+int packetNumber;
+int command;
+};
+
 class DataProcessing {
 public:
     DataProcessing();
     explicit DataProcessing(const std::vector<std::int32_t>& inputData);
-
+    void setData(const std::vector<std::int32_t>& inputData);
     bool checkId(int robotID, const std::vector<std::int32_t>& data) const;
     float getAngle(int robotID) const;
     float getXVelocity() const;
     float getZVelocity(int robotID) const;
     float convertAngleData(const std::vector<std::int32_t>& rawAngle) const;
     std::optional<bool> typeControl(const std::vector<std::int32_t>& inputData) const;
-    bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData);
+    bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) const;
     bool crcCheck(const std::vector<std::int32_t>& inputData) const;
+    bool queueTcpPacket(int robotID);
+    std::optional<TcpPacket> popTcpPacket();
+    std::size_t tcpQueueSize() const;
 
     ~DataProcessing() = default;
 
@@ -52,6 +63,8 @@ private:
     float xVelocity = 0.22f;
     static constexpr float maxAngle     = 360.0f;
     static constexpr float maxZVelocity = 0.22f;
+    std::queue<TcpPacket> tcpQueue;
+    std::map<int, int> lastPacketNumber;
 };
 
 #endif // DATAPROCESSING_H
