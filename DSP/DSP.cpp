@@ -175,7 +175,7 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
 int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     //Bruges til at finde hvilken dtmf tone der matcher magnitude spektrummet.
     //Finder højste og næste højeste værdi i magnitude
-    double threshold = sum(magnitude)/20; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
+    double threshold = sum(magnitude)/10; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
     std::vector<std::vector<int>> dtmf;
     std::vector<int> mFrek;
     if(useDtmf){
@@ -203,7 +203,7 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     int frek1 = mFrek[index1];
     int frek2 = mFrek[index2];
     
-    if (magnitude[index1] < threshold || magnitude[index2] < threshold || magnitude[index1] < 0.002 || magnitude[index2] < 0.002) {
+    if (magnitude[index1] < threshold || magnitude[index2] < threshold || magnitude[index1] < 0.1 || magnitude[index2] < 0.1) {
         return -1; // Returner -1 hvis ingen af de to højeste værdier er over threshold
     }
 
@@ -220,14 +220,13 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
 
 void DSP::listen(int samplerate, int blocksize) {
 
-    // Indstillinger for sliding window
-    const int WINDOW_SIZE = samplerate * 40 / 1000;
-    const int HOP_SIZE = samplerate * 10 / 1000;
+    const int WINDOW_SIZE = 500;
+    const int HOP_SIZE = 51;
     const int END_WINDOWS = 3;
     int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
 
-    const int UdpBlockAmount = 15;
-    const int TcpBlockAmount = 19;
+    const int UdpBlockAmount = 7;
+    const int TcpBlockAmount = 10;
 
     std::vector<std::vector<float>> data = {};
 
@@ -269,7 +268,7 @@ void DSP::listen(int samplerate, int blocksize) {
     State state = State::WAIT_ID;
 
     std::vector<float> audioBuffer;
-    std::vector<double> toner;
+    std::vector<int> toner;
 
     int numStartBitsUDP = 0;
     int numStartBitsTCP = 0;
@@ -302,7 +301,7 @@ void DSP::listen(int samplerate, int blocksize) {
             numberOfBlocks++;
             if(numberOfBlocks >= numberOfBlocksWanted) {
                 // Udskriv toner til terminalen
-                for (double t : toner) {
+                for (int t : toner) {
                     std::cout << t << " ";
                 }
                 std::cout << std::endl;
@@ -310,7 +309,11 @@ void DSP::listen(int samplerate, int blocksize) {
                 for (const std::vector<float>& samples : data) {
                     fileFromData("data.txt", samples);
                 }
-
+                std::vector<int> processedData = returnNumberStream(toner);
+                for (int d : processedData) {
+                    std::cout << d << " ";
+                }
+                std::cout << std::endl;
                 return;
             }
         }
@@ -357,19 +360,19 @@ void DSP::listen(int samplerate, int blocksize) {
             // STATE 1: Vent på ID
             // ----------------------------------------
             if (state == State::WAIT_ID) {
-                toner.push_back(tone);
 
                 if (tone == ID[0]) {
                     numStartBitsUDP++;
                     numberOfBlocksWanted = UdpBlockAmount;
+                    toner.push_back(tone);
                 } else if(tone == ID[1]) {
                     numStartBitsTCP++;
                     numberOfBlocksWanted = TcpBlockAmount;
+                    toner.push_back(tone);
                 }
 
                 if (numStartBitsUDP >= nIdBits || numStartBitsTCP >= nIdBits) {
                     state = State::LISTEN;
-
                 }
             }
 
