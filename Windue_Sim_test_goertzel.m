@@ -3,12 +3,14 @@ clear;
 clc;
 
 %% Parameters
-fs = 16000;
+fs = 8000;
 
 WINDOW_SIZE = floor(fs * 40 / 1000);  % 40 ms = 320 samples
 HOP_SIZE = floor(fs * 10 / 1000);     % 10 ms = 80 samples
+WINDOW_SIZE = 320; % 40 ms = 320 samples
+HOP_SIZE = 10;     % 10 ms = 80 samples
 
-yDTMF = readmatrix("DSP/Data_test_dtmf/data9.txt");
+yDTMF = readmatrix("DSP/build/data.txt");
 yDTMF = yDTMF(:);
 
 % DTMF frequencies
@@ -104,8 +106,8 @@ magnitudesHann = magnitudesHann;
 
 %% Calculate thresholds from squared magnitudes
 
-thresholdsNormal = sum(magnitudesNormal, 2)/20;
-thresholdsHann = sum(magnitudesHann, 2)/20;
+thresholdsNormal = sum(magnitudesNormal, 2)/10;
+thresholdsHann = sum(magnitudesHann, 2)/10;
 
 %% Create figure
 
