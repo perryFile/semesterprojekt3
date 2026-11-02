@@ -11,6 +11,11 @@
 #include <vector>
 #include "physicalLayer.h"
 
+struct RobotPacketType {
+    int robotNr; //Hvilket robot vi skal bruge
+    bool type;   // 0/False = UDP, 1/True = TCP
+};
+
 class DataProcessing {
 public:
     DataProcessing();
@@ -21,9 +26,21 @@ public:
     float getXVelocity() const;
     float getZVelocity(int robotID) const;
     float convertAngleData(const std::vector<std::int32_t>& rawAngle) const;
+    std::optional<bool> typeControl(const std::vector<std::int32_t>& inputData) const; 
+    bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData);
     ~DataProcessing() = default;
 
 private:
+    //skal 100% omnavngives
+    const std::vector<RobotPacketType> robotIDtype = {
+        {0, false},  // id 0: robot 1, UDP
+        {1, true},   // id 1: robot 1, TCP
+        {2, false},  // id 2: robot 2, UDP
+        {3, true}    // id 3: robot 2, TCP
+    };
+
+    static constexpr std::size_t UDP_PacketSize = 4;
+    static constexpr std::size_t TCP_PacketSize = 6;
     std::vector<std::int32_t> data;
     std::vector<std::int32_t> command;
     std::vector<std::int32_t> rawAngle;
