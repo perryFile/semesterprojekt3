@@ -220,8 +220,8 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
 
 void DSP::listen(int samplerate) {
 
-    const int WINDOW_SIZE = 320;
-    const int HOP_SIZE = 51;
+    const int WINDOW_SIZE = 220;
+    const int HOP_SIZE = 41;
     int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
 
     const int UdpBlockAmount = 7;
