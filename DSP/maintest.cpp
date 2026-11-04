@@ -41,5 +41,5 @@
 
 int main(){
     DSP dsp(379, 8000, 1, {1, 2});
-    dsp.listen(8000, 379);
+    dsp.listen(8000);
 }

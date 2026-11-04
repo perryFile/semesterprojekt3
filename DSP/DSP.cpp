@@ -218,7 +218,7 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     return -1;
 }
 
-void DSP::listen(int samplerate, int blocksize) {
+void DSP::listen(int samplerate) {
 
     const int WINDOW_SIZE = 500;
     const int HOP_SIZE = 51;
@@ -231,10 +231,10 @@ void DSP::listen(int samplerate, int blocksize) {
     std::vector<std::vector<float>> data = {};
 
     // Kontroller parametre
-    if (samplerate <= 0 || blocksize <= 0 ||
+    if (samplerate <= 0 || 
         WINDOW_SIZE < 2 || HOP_SIZE <= 0 ||
         nIdBits <= 0 ||
-        channel != 1 || blocksize != this->blocksize) {
+        channel != 1 ) {
         throw std::invalid_argument("Invalid parameters");
     }
 
@@ -273,6 +273,7 @@ void DSP::listen(int samplerate, int blocksize) {
     int numStartBitsUDP = 0;
     int numStartBitsTCP = 0;
     int endCount = 0;
+    std::string protocol = "UDP"; // Default protocol
 
     int numberOfBlocks = 0;
     int numberOfBlocksWanted = 0;
@@ -309,7 +310,7 @@ void DSP::listen(int samplerate, int blocksize) {
                 for (const std::vector<float>& samples : data) {
                     fileFromData("data.txt", samples);
                 }
-                std::vector<int> processedData = returnNumberStream(toner);
+                std::vector<int> processedData = returnNumberStream(toner, protocol, HOP_SIZE, samplerate);
                 for (int d : processedData) {
                     std::cout << d << " ";
                 }
@@ -365,10 +366,12 @@ void DSP::listen(int samplerate, int blocksize) {
                     numStartBitsUDP++;
                     numberOfBlocksWanted = UdpBlockAmount;
                     toner.push_back(tone);
+
                 } else if(tone == ID[1]) {
                     numStartBitsTCP++;
                     numberOfBlocksWanted = TcpBlockAmount;
                     toner.push_back(tone);
+                    protocol = "TCP";
                 }
 
                 if (numStartBitsUDP >= nIdBits || numStartBitsTCP >= nIdBits) {
