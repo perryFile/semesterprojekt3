@@ -4,27 +4,25 @@
 #include "dataProcessing.h"
 
 int main() {
-    const std::vector<std::vector<std::int32_t>> packets = {
-        {1, 0, 4, 2, 4, 12},
-        {1, 0, 1, 11, 3, 2},
-        {2, 0, 9, 0},
-        {0, 1, 6, 8},
-        {1, 0, 4, 2, 4, 13},
-    };
-
+    PhysicalLayer physicalLayer;
     DataProcessing dp;
 
-    for (const auto& packet : packets) {
-        std::cout << "{";
+    physicalLayer.queueData({1, 0, 4, 2, 4, 12});
+    physicalLayer.queueData({1, 0, 4, 2, 4, 12}); // duplicate packet number
+    physicalLayer.queueData({1, 0, 1, 11, 3, 2});
+    physicalLayer.queueData({0, 0, 1, 11});
+
+    while (true) {
+        const std::vector<std::int32_t> packet = physicalLayer.getData();
+        if (packet.empty()) {
+            break;
+        }
+
+        std::cout << "Received packet: {";
         for (std::size_t i = 0; i < packet.size(); i++) {
             std::cout << packet[i] << (i + 1 < packet.size() ? ", " : "");
         }
-        std::cout << "}  ->  ";
-
-        if (packet.empty()) {
-            std::cout << "empty\n";
-            continue;
-        }
+        std::cout << "}\n";
 
         const int robotID = packet[0];
         dp.setData(packet);
@@ -44,10 +42,10 @@ int main() {
     }
 
     std::cout << "\nTCP queue (" << dp.tcpQueueSize() << " packets):\n";
-    while (auto p = dp.popTcpPacket()) {
-        std::cout << "  robot " << p->robotID
-                  << ", packet nr " << p->packetNumber
-                  << ", command " << p->command << "\n";
+    while (const auto queuedPacket = dp.popTcpPacket()) {
+        std::cout << "  robot " << queuedPacket->robotID
+                  << ", packet nr " << queuedPacket->packetNumber
+                  << ", command " << queuedPacket->command << "\n";
     }
 
     return 0;
