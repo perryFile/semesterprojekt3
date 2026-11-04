@@ -218,7 +218,8 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     return -1;
 }
 
-void DSP::listen(int samplerate) {
+std::vector<int> DSP::listen(int samplerate, double toneDuration) {
+    std::vector<int> toner;
 
     const int WINDOW_SIZE = 220;
     const int HOP_SIZE = 41;
@@ -255,21 +256,15 @@ void DSP::listen(int samplerate) {
     };
 
     State state = State::WAIT_ID;
-
     std::vector<float> audioBuffer;
-    std::vector<int> toner;
 
     int numStartBitsUDP = 0;
     int numStartBitsTCP = 0;
-    int endCount = 0;
-    std::string protocol = "UDP"; // Default protocol
-
     int numberOfBlocks = 0;
     int numberOfBlocksWanted = 0;
-
+    std::string protocol = "UDP"; // Default protocol
 
     std::cout << "Venter på ID..." << std::endl;
-
     while (true) {
 
         // Indsaml nye samples
@@ -291,20 +286,16 @@ void DSP::listen(int samplerate) {
             numberOfBlocks++;
             if(numberOfBlocks >= numberOfBlocksWanted) {
                 // Udskriv toner til terminalen
-                for (int t : toner) {
-                    std::cout << t << " ";
-                }
+                // for (int t : toner) {
+                //     std::cout << t << " ";
+                // }
                 std::cout << std::endl;
                 std::cout << "Data gemt i filen data.txt" << std::endl;
                 for (const std::vector<float>& samples : data) {
                     fileFromData("data.txt", samples);
                 }
-                std::vector<int> processedData = returnNumberStream(toner, protocol, HOP_SIZE, samplerate);
-                for (int d : processedData) {
-                    std::cout << d << " ";
-                }
-                std::cout << std::endl;
-                return;
+                std::vector<int> processedData = returnNumberStream(toner, protocol, HOP_SIZE, samplerate, toneDuration);
+                return processedData;
             }
         }
 

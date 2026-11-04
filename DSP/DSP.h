@@ -19,7 +19,7 @@ class DSP {
         std::vector<double> goertzel(int blocksize, double fs, bool useDtmf = true);
         std::vector<double> goertzel(std::vector<float> data, int blocksize, double fs, bool useDtmf = true);
         int getTone(std::vector<double> &magnitude, bool useDtmf = true);
-        void listen(int samplerate);
+        std::vector<int> listen(int samplerate, double toneDuration = 0.07);
 
     private:
         std::vector<float> mData;

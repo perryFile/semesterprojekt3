@@ -33,14 +33,12 @@ std::vector<double> power2magnitude(const std::vector<double>& magnitude){
     return power2mag;
 }
 
-std::vector<int> returnNumberStream(
-    const std::vector<int>& toner,
-    std::string protocol,
+std::vector<int> returnNumberStream(const std::vector<int>& toner,
+std::string protocol,
     int jumpSize,
-    int sampleRate)
+    int sampleRate,
+    double toneDuration)
 {
-    const double toneDuration = 0.05;
-
     const int streamSize = std::round(toneDuration * sampleRate / jumpSize);
     std::cout << "Stream size: " << streamSize << std::endl;
     std::vector<int> tonerProcessed = {};
