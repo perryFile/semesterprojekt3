@@ -128,7 +128,11 @@ void play_sequence(
 }
 
 int main() {
+<<<<<<< HEAD
     //std::this_thread::sleep_for(std::chrono::seconds(1));
     play_sequence("1528", 0.03, 0.04);
+=======
+    play_sequence("12651D", 0.04, 0.04);
+>>>>>>> a58b3a2f40c0d7cee035c382ba047f710b7d28a6
     return 0;
 }
