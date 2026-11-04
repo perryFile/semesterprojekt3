@@ -5,8 +5,10 @@
 #include <map>
 #include <string>
 #include <portaudio.h>
+#include <thread>
+#include <chrono>
 
-const int FS = 16000;
+const int FS = 8000;
 const double PI = 3.14159265358979323846;
 
 const std::map<char, std::pair<double, double>> DTMF1 = {
@@ -126,6 +128,7 @@ void play_sequence(
 }
 
 int main() {
-    play_sequence("3412651", 0.04, 0);
+    //std::this_thread::sleep_for(std::chrono::seconds(1));
+    play_sequence("1528", 0.03, 0.04);
     return 0;
 }
