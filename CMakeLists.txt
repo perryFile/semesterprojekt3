@@ -11,7 +11,7 @@ find_package(geometry_msgs REQUIRED)
 add_executable(turtlebot_node
     test/dataExecution.cpp
     test/dataProcessing.cpp
-    test/test_main.cpp
+    test/queueTest_main.cpp
 )
 
 target_include_directories(turtlebot_node PRIVATE test)
