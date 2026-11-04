@@ -62,7 +62,13 @@ std::vector<int> returnNumberStream(
 
             // Find hyppigste tal i segmentet
             for (int k : segment) {
-                frequency[k]++;
+                
+                if(k == -1){
+                    continue; // Spring over -1 værdier
+                }
+                else {
+                    frequency[k]++;
+                }
 
                 if (frequency[k] > maxCount) {
                     maxCount = frequency[k];
