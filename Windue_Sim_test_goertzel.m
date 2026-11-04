@@ -7,8 +7,8 @@ fs = 8000;
 
 WINDOW_SIZE = floor(fs * 40 / 1000);  % 40 ms = 320 samples
 HOP_SIZE = floor(fs * 10 / 1000);     % 10 ms = 80 samples
-WINDOW_SIZE = 320; % 40 ms = 320 samples
-HOP_SIZE = 51;     % 10 ms = 80 samples
+WINDOW_SIZE = 80; % 40 ms = 320 samples
+HOP_SIZE = 10;     % 10 ms = 80 samples
 
 yDTMF = readmatrix("DSP/build/data.txt");
 yDTMF = yDTMF(:);
