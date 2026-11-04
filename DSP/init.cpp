@@ -39,10 +39,10 @@ std::vector<int> returnNumberStream(
     int jumpSize,
     int sampleRate)
 {
-    const double toneDuration = 0.07;
+    const double toneDuration = 0.04;
 
     const int streamSize = std::round(toneDuration * sampleRate / jumpSize);
-
+    std::cout << "Stream size: " << streamSize << std::endl;
     std::vector<int> tonerProcessed = {};
 
     if (protocol == "UDP") {

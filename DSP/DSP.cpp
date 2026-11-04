@@ -220,9 +220,8 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
 
 void DSP::listen(int samplerate) {
 
-    const int WINDOW_SIZE = 500;
+    const int WINDOW_SIZE = 320;
     const int HOP_SIZE = 51;
-    const int END_WINDOWS = 3;
     int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
 
     const int UdpBlockAmount = 7;
@@ -230,17 +229,7 @@ void DSP::listen(int samplerate) {
 
     std::vector<std::vector<float>> data = {};
 
-    // Kontroller parametre
-    if (samplerate <= 0 || 
-        WINDOW_SIZE < 2 || HOP_SIZE <= 0 ||
-        nIdBits <= 0 ||
-        channel != 1 ) {
-        throw std::invalid_argument("Invalid parameters");
-    }
-
-    // ----------------------------------------
     // Beregn Hann-vinduet én gang
-    // ----------------------------------------
     std::vector<double> hann(WINDOW_SIZE);
 
     double windowSum = 0;
