@@ -5,12 +5,23 @@ PhysicalLayer::PhysicalLayer() {
     
 }
 
-std::vector<std::int32_t> PhysicalLayer::getData() {
- return data;
-}
-
-std::vector<std::int32_t> PhysicalLayer::receiveData(std::vector<std::int32_t> inputData) {
-    data = inputData;
-    
+std::vector<std::int32_t> PhysicalLayer::receiveData() {
+    // Funktion der skal lytte og hente data ind
     return data;
 }
+
+
+void PhysicalLayer::queueData(std::vector<std::int32_t> inputData) {
+    queuedData.push(inputData);
+}
+
+std::vector<std::int32_t> PhysicalLayer::getData() {
+    if (!queuedData.empty()) {
+        data = queuedData.front();
+        queuedData.pop();
+    } else {
+        data.clear(); 
+    }
+    return data;
+}
+
