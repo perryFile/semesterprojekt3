@@ -419,11 +419,6 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
     }
 }
 
-void DSP::sendData(const std::vector<int>& data) {
-
-}
-
-
 std::vector<float> DSP::tone(int key, double duration = 0.1) {
 
     auto frequencies = DTMF1.at(key);

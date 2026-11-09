@@ -22,7 +22,6 @@ class DSP {
         std::vector<int> listen(int samplerate, double toneDuration = 0.07);
         std::vector<float> tone(int key, double duration = 0.03);
         std::vector<float> make_signal(const std::vector<int>& keys, double tone_dur = 0.03, double gap = 0.04);
-        void play_sequence(const std::vector<int>& keys, double tone_dur = 0.03, double gap = 0.04);
         void sendData(const std::vector<int>& keys, double tone_dur = 0.03, double gap = 0.04);
 
     private:

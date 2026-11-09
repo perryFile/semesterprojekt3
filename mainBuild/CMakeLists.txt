@@ -19,6 +19,10 @@ add_executable(main
     dataProcessing.cpp
     physicalLayer.cpp
 )
+add_executable(mainPlayer
+    mainPlayer.cpp
+    DSP.cpp
+)
 
 # PortAudio stier
 target_include_directories(main PRIVATE
