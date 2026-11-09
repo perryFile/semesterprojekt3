@@ -200,6 +200,6 @@ std::size_t DataProcessing::tcpQueueSize() const {
 }
 
 std::int32_t DataProcessing::receivedTcpPacket() {
+    return 0;
     // Funktionen bruges til at lave ACK når vi modtager en TCP pakke. 
-    
 }

@@ -7,7 +7,6 @@
 #include "physicalLayer.h"
 #include "dataProcessing.h"
 #include "dataExecution.h"
-#include "controller.h"
 #include "DSP.h"
 
 int main(int argc, char** argv) {
@@ -19,7 +18,7 @@ int main(int argc, char** argv) {
     DataExecution dE;
     int blocksize = 379; 
     int samplerate = 8000; 
-    int numIdBits = 1; 
+    int numIdBits = 2; 
     int UdpID = 1; 
     int TcpID = 2; 
     std::vector<int> toner = {};
@@ -33,7 +32,7 @@ int main(int argc, char** argv) {
     }
     std::cout << std::endl;
 
-    pL.queue(toner);
+    pL.queueData(toner);
     const std::vector<std::int32_t> packet = pL.getData();
 
     std::cout << "Received packet: {";
@@ -43,21 +42,20 @@ int main(int argc, char** argv) {
     std::cout << "}\n";
 
     const int robotID = packet[0];
-    dp.setData(packet);
+    dP.setData(packet);
 
-    if (!dp.isValidPacket(robotID, packet)) {
-        std::cout << "INVALID\n";
-        continue;
+    if (!dP.isValidPacket(robotID, packet)) {
+        std::cout << "INVALID\n"; 
     }
 
-    if (dp.typeControl(packet).value()) {
-        const bool queued = dp.queueTcpPacket(robotID);
+    if (dP.typeControl(packet).value()) {
+        const bool queued = dP.queueTcpPacket(robotID);
         std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
     } else {
-        float zVel = dp.getAngle(robotID);
-        float xVel = dp.getXvelocity();
-        std::cout << "valid UDP, angle " << dp.getAngle(robotID)
-                    << ", xVelocity " << dp.getXVelocity() << "\n";
+        float zVel = dP.getAngle(robotID);
+        float xVel = dP.getXVelocity();
+        std::cout << "valid UDP, angle " << dP.getAngle(robotID)
+                    << ", xVelocity " << dP.getXVelocity() << "\n";
         dE.moveRobot(xVel, zVel);
     }
 
