@@ -418,3 +418,90 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
         }
     }
 }
+
+void DSP::sendData(const std::vector<int>& data) {
+
+}
+
+
+std::vector<float> DSP::tone(int key, double duration = 0.1) {
+
+    auto frequencies = DTMF1.at(key);
+
+    double f_low = frequencies.first;
+    double f_high = frequencies.second;
+
+    int samples = static_cast<int>(duration * FS);
+
+    std::vector<float> signal(samples);
+
+    for (int i = 0; i < samples; i++) {
+
+        double t = static_cast<double>(i) / FS;
+
+        signal[i] = 0.25f * (
+            std::sin(2 * PI * f_low * t) +
+            std::sin(2 * PI * f_high * t)
+        );
+    }
+
+    return signal;
+}
+
+std::vector<float> DSP::make_signal(
+    const std::vector<int>& keys,
+    double tone_dur = 0.1,
+    double gap = 0.1
+) {
+
+    std::vector<float> signal;
+
+    int silence_samples = static_cast<int>(gap * FS);
+
+    for (int key : keys) {
+
+        std::vector<float> samples = tone(key, tone_dur);
+
+        signal.insert(
+            signal.end(),
+            samples.begin(),
+            samples.end()
+        );
+
+        signal.insert(
+            signal.end(),
+            silence_samples,
+            0.0f
+        );
+    }
+
+    return signal;
+}
+
+void DSP::sendData(const std::vector<int>& keys,double tone_dur = 0.05,double gap = 0.1){
+
+    std::vector<float> signal =
+        make_signal(keys, tone_dur, gap);
+
+    // Add 100 ms silence at the beginning
+    signal.insert(
+        signal.begin(),
+        FS / 10,
+        0.0f
+    );
+
+    // Add 100 ms silence at the end
+    signal.insert(
+        signal.end(),
+        FS / 10,
+        0.0f
+    );
+
+    PaError err = Pa_Initialize();
+
+    if (err != paNoError) {
+        std::cerr << "PortAudio initialization error: "
+                  << Pa_GetErrorText(err) << std::endl;
+        return;
+    }
+}
