@@ -52,10 +52,10 @@ int main(int argc, char** argv) {
         const bool queued = dP.queueTcpPacket(robotID);
         std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
     } else {
-        float zVel = dP.getAngle(robotID);
-        float xVel = dP.getXVelocity();
-        std::cout << "valid UDP, angle " << dP.getAngle(robotID)
-                    << ", xVelocity " << dP.getXVelocity() << "\n";
+        float zVel = dp.getZVelocity(robotID);
+        float xVel = dp.getXvelocity();
+        std::cout << "valid UDP, angle " << dp.getZVelocity()
+                    << ", xVelocity " << dp.getXVelocity() << "\n";
         dE.moveRobot(xVel, zVel);
     }
 
