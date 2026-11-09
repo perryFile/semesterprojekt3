@@ -4,11 +4,11 @@ clear; clc; close all;
 data = readmatrix("DSP/Data_test_dtmf/data9.txt");
 data = data(:);
 
-fs = 16000;
+fs = 8000;
 
 %% Sliding window indstillinger (samme som C++)
-WINDOW_SIZE = floor(fs * 40 / 1000);  % 40 ms = 320 samples
-HOP_SIZE = floor(fs * 10 / 1000);     % 10 ms = 80 samples
+WINDOW_SIZE = 320;  % 40 ms = 320 samples
+HOP_SIZE = 51;     % 10 ms = 80 samples
 
 % Antal vinduer
 numBlocks = floor((length(data) - WINDOW_SIZE) / HOP_SIZE) + 1;

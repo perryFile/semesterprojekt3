@@ -6,21 +6,24 @@ DataProcessing::DataProcessing() {}
 DataProcessing::DataProcessing(const std::vector<std::int32_t>& inputData)
     : data(inputData) {}
 
+void DataProcessing::setData(const std::vector<std::int32_t>& inputData) {
+    data = inputData;
+}
 
 bool DataProcessing::checkId(int robotID, const std::vector<std::int32_t>& data) const {
     return !data.empty() && data[0] == robotID;
 }
 
 float DataProcessing::getAngle(int robotID) const {
-    if (!checkId(robotID, data)) {
-        return 0.0f;
-    }
+    if (!checkId(robotID, data))       return 0.0f;
+    if (!isValidPacket(robotID, data)) return 0.0f;
+
+    const bool isTcp = typeControl(data).value();
+    if (isTcp) return 0.0f;
+
+    if (data.size() < 2) return 0.0f;
 
     // data[0] is robotID, everything after it is the angle
-    if (data.size() < 2) {
-        return 0.0f;
-    }
-
     std::vector<std::int32_t> rawAngle(data.begin() + 1, data.end());
 
     return convertAngleData(rawAngle);
@@ -78,14 +81,19 @@ float DataProcessing::convertAngleData(const std::vector<std::int32_t>& rawAngle
 }
 
 std::optional<bool> DataProcessing::typeControl(const std::vector<std::int32_t>& inputData) const {
-    if (inputData.size() == UDP_PacketSize) return false;   // UDP
-    if (inputData.size() == TCP_PacketSize) return true;    // TCP
+    if (inputData.size() == UDP_PacketSize) {   
+        return false;   // UDP
+    }
+    if (inputData.size() == TCP_PacketSize) {
+        return true; // TCP   
+    }
+
     return std::nullopt;                                    // ugyldig længde
 }
 
-//Passer robotID med om pakken der er sendt er en TCP eller UDP
-bool DataProcessing::isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) {
-    //False = UDP, true = TCP, tom = ugyldig længde
+// Passer robotID med om pakken der er sendt er en TCP eller UDP
+bool DataProcessing::isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) const {
+    // False = UDP, true = TCP, tom = ugyldig længde
     const auto type = typeControl(inputData);
     if (!type) return false;
 
@@ -123,7 +131,7 @@ std::uint8_t DataProcessing::crc8(const std::vector<std::int32_t>& data, std::si
         std::uint8_t tone = static_cast<std::uint8_t>(data[i]);
         crc ^= tone;
 
-        // 2. Gå igennem hver bit i den aktuelle byte
+        // Går igennem hver bit i den aktuelle byte
         for (int bit = 0; bit < 8; bit++) {
 
             // Gem værdien af af leftmost bit inden vi shifter mod venstre 
@@ -132,7 +140,7 @@ std::uint8_t DataProcessing::crc8(const std::vector<std::int32_t>& data, std::si
             // Shift alting mod venstre så vi går videre til den næste bit
             crc = static_cast<std::uint8_t>(crc << 1);
 
-            // Hvis vi mistede en bit så tilføj den til crc 
+            // Hvis vi mistede en bit så tilføjer vi den til crc 
             if (topBitIsSet) {
                 crc ^= POLYNOMIAL;
             }
@@ -141,17 +149,52 @@ std::uint8_t DataProcessing::crc8(const std::vector<std::int32_t>& data, std::si
 
     return crc;
 }
-// Last two tones = CRC (first one is the most significant digit).
-// Everything before them is covered by the CRC.
+// Sidste to toner = CRC (første er most significant).
 bool DataProcessing::crcCheck(const std::vector<std::int32_t>& inputData) const {
     if (inputData.size() < 3) return false;
 
     for (std::int32_t t : inputData) {
-        if (t < 0 || t > 15) return false;      // invalid tone
+        if (t < 0 || t > 15) return false;      // dårlig tone
     }
 
     const std::size_t payloadLen = inputData.size() - 2;
     const int received = inputData[payloadLen] * 16 + inputData[payloadLen + 1];
 
     return crc8(inputData, payloadLen) == received;
+}
+
+bool DataProcessing::queueTcpPacket(int robotID) {
+    // Vi tjekker for fejl i pakken og om det er en tcp pakke (typeControl returnerer true hvis det er en TCP)
+    if (!checkId(robotID, data))       return false;
+    if (!isValidPacket(robotID, data)) return false;
+    if (!typeControl(data).value())    return false;
+
+    const TcpPacket packet{
+        data[0],        // ID
+        data[1] * 16 + data[2],   // Pakkenummer
+        data[3]                 // Kommando
+    };
+    // Tjekker om den forrige pakke har samme nummer som den aktuelle pakke
+    const auto it = lastPacketNumber.find(packet.robotID);
+    if (it != lastPacketNumber.end() && it->second == packet.packetNumber) {
+        return false;
+    }
+    // Tilføjer pakken til vores stack
+    lastPacketNumber[packet.robotID] = packet.packetNumber;
+    tcpQueue.push(packet);
+    return true;
+}
+
+// Henter en pakke fra vores stak og fjerner den fra stakken efterfølgende
+std::optional<TcpPacket> DataProcessing::popTcpPacket() {
+    // Tjekker om den er tom så .front() ikke fejler. 
+    if (tcpQueue.empty()) return std::nullopt;
+
+    const TcpPacket packet = tcpQueue.front();
+    tcpQueue.pop();
+    return packet;
+}
+
+std::size_t DataProcessing::tcpQueueSize() const {
+    return tcpQueue.size();
 }

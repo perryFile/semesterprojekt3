@@ -33,16 +33,14 @@ std::vector<double> power2magnitude(const std::vector<double>& magnitude){
     return power2mag;
 }
 
-std::vector<int> returnNumberStream(
-    const std::vector<int>& toner,
-    std::string protocol,
+std::vector<int> returnNumberStream(const std::vector<int>& toner,
+std::string protocol,
     int jumpSize,
-    int sampleRate)
+    int sampleRate,
+    double toneDuration)
 {
-    const double toneDuration = 0.07;
-
     const int streamSize = std::round(toneDuration * sampleRate / jumpSize);
-
+    std::cout << "Stream size: " << streamSize << std::endl;
     std::vector<int> tonerProcessed = {};
 
     if (protocol == "UDP") {
@@ -77,11 +75,42 @@ std::vector<int> returnNumberStream(
             }
 
             tonerProcessed.push_back(mostFrequent);
+            if(tonerProcessed.size() == 4){
+                break; // Stop efter at have fundet 4 toner
+            }
         }
     }
 
     else if (protocol == "TCP") {
-        // Implementeres senere
+        for (int i = 0; i + streamSize <= toner.size(); i += streamSize) {
+
+            std::vector<int> segment(
+                toner.begin() + i,
+                toner.begin() + i + streamSize
+            );
+
+            std::unordered_map<int, int> frequency;
+
+            int mostFrequent = -1;
+            int maxCount = 0;
+
+            for (int k : segment) {
+                if (k == -1) {
+                    continue;
+                }
+
+                frequency[k]++;
+                if (frequency[k] > maxCount) {
+                    maxCount = frequency[k];
+                    mostFrequent = k;
+                }
+            }
+
+            tonerProcessed.push_back(mostFrequent);
+            if (tonerProcessed.size() == 6) {
+                break;
+            }
+        }
     }
 
     else {

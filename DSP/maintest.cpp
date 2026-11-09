@@ -40,6 +40,14 @@
 // }
 
 int main(){
+    std::vector<int> toner = {};
+    double toneDuration = 0.07; // Duration of each tone in seconds
+    int samplerate = 8000; // Sample rate in Hz
     DSP dsp(379, 8000, 1, {1, 2});
-    dsp.listen(8000, 379);
+    toner = dsp.listen(samplerate, toneDuration);
+    for (int t : toner) {
+        std::cout << t << " ";
+    }
+    std::cout << std::endl;
+    return 0;
 }
