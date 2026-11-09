@@ -198,3 +198,8 @@ std::optional<TcpPacket> DataProcessing::popTcpPacket() {
 std::size_t DataProcessing::tcpQueueSize() const {
     return tcpQueue.size();
 }
+
+std::int32_t DataProcessing::receivedTcpPacket() {
+    // Funktionen bruges til at lave ACK når vi modtager en TCP pakke. 
+    
+}
