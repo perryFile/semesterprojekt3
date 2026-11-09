@@ -61,7 +61,7 @@ class DataProcessing {
         std::vector<std::int32_t> rawAngle;
         float angle = 0.00f;
         float xVelocity = 0.22f;
-        static constexpr float maxAngle     = 360.0f;
+        static constexpr float maxAngle     = 4095.0f;
         static constexpr float maxZVelocity = 0.22f;
         std::queue<TcpPacket> tcpQueue;
         std::map<int, int> lastPacketNumber;

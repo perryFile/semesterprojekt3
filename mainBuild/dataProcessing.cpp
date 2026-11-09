@@ -1,5 +1,6 @@
 // dataProcessing.cpp
 #include "dataProcessing.h"
+#include <iostream>
 
 DataProcessing::DataProcessing() {}
 
@@ -24,8 +25,7 @@ float DataProcessing::getAngle(int robotID) const {
     if (data.size() < 2) return 0.0f;
 
     // data[0] is robotID, everything after it is the angle
-    std::vector<std::int32_t> rawAngle(data.begin() + 1, data.end());
-
+    std::vector<std::int32_t> rawAngle(data.begin() + 1, data.end());;
     return convertAngleData(rawAngle);
 }
 
@@ -36,10 +36,10 @@ float DataProcessing::getXVelocity() const {
 float DataProcessing::getZVelocity(int robotID) const {
     const float angle = getAngle(robotID);
 
-    // Vi gør så værdien ikke overstiger 0.22
+    const float center = maxAngle / 2.0f;                  
     const float clamped = std::clamp(angle, 0.0f, maxAngle);
 
-    return clamped / maxAngle * maxZVelocity;
+    return (clamped - center) / center * maxZVelocity;    
 }
 
 float DataProcessing::convertAngleData(const std::vector<std::int32_t>& rawAngle) const {
@@ -79,7 +79,7 @@ float DataProcessing::convertAngleData(const std::vector<std::int32_t>& rawAngle
     // "3E8" -> 1000
     return static_cast<float>(std::stoi(hexAngle, nullptr, 16));
 }
-
+ 
 std::optional<bool> DataProcessing::typeControl(const std::vector<std::int32_t>& inputData) const {
     if (inputData.size() == UDP_PacketSize) {   
         return false;   // UDP
