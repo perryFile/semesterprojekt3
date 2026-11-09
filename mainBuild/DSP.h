@@ -20,6 +20,7 @@ class DSP {
         std::vector<double> goertzel(std::vector<float> data, int blocksize, double fs, bool useDtmf = true);
         int getTone(std::vector<double> &magnitude, bool useDtmf = true);
         std::vector<int> listen(int samplerate, double toneDuration = 0.07);
+        void sendData(const std::vector<int>& data, std::string protocol = "UDP");
 
     private:
         std::vector<float> mData;

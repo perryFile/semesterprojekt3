@@ -60,9 +60,9 @@ class DataProcessing {
         std::vector<std::int32_t> command;
         std::vector<std::int32_t> rawAngle;
         float angle = 0.00f;
-        float xVelocity = 0.22f;
+        float xVelocity = 0.15f; // Kan ikke køre hurtigere, da robotten ikke kan følge med.
         static constexpr float maxAngle     = 4095.0f;
-        static constexpr float maxZVelocity = 0.22f;
+        static constexpr float maxZVelocity = 1.0f;
         std::queue<TcpPacket> tcpQueue;
         std::map<int, int> lastPacketNumber;
     };

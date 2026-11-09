@@ -57,8 +57,8 @@ int main(int argc, char** argv) {
             float xVel = dP.getXVelocity();
             std::cout << "valid UDP, angle " << zVel
                         << ", xVelocity " << xVel << "\n";          
-            dE.moveRobot(0.1, zVel);
-            // dE.stopRobot();
+            dE.moveRobot(xVel, zVel);
+            
         }
         
     }
