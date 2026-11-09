@@ -22,6 +22,7 @@ add_executable(main
 add_executable(mainPlayer
     mainPlayer.cpp
     DSP.cpp
+    init.cpp
 )
 
 # PortAudio stier
@@ -35,6 +36,16 @@ target_link_directories(main PRIVATE
 
 # Link PortAudio
 target_link_libraries(main portaudio)
+
+target_include_directories(mainPlayer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/portaudio/include
+)
+
+target_link_directories(mainPlayer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/portaudio/lib/.libs
+)
+
+target_link_libraries(mainPlayer portaudio)
 
 # ROS 2 dependencies
 ament_target_dependencies(main

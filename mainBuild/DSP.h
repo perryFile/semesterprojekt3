@@ -1,6 +1,8 @@
 #include <vector>
 #include <fstream>
+#include <map>
 #include <string>
+#include <utility>
 #include "../portaudio/include/portaudio.h"
 
 #ifndef  DSP_H

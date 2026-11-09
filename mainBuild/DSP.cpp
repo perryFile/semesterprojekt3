@@ -12,7 +12,7 @@
 #include "init.h"
 
 # define M_PI           3.14159265358979323846
-
+# define FS             16000
 DSP::~DSP() {
     // Stop og luk streamen
     if (stream) {
@@ -419,7 +419,7 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
     }
 }
 
-std::vector<float> DSP::tone(int key, double duration = 0.1) {
+std::vector<float> DSP::tone(int key, double duration) {
 
     auto frequencies = DTMF1.at(key);
 
@@ -435,19 +435,15 @@ std::vector<float> DSP::tone(int key, double duration = 0.1) {
         double t = static_cast<double>(i) / FS;
 
         signal[i] = 0.25f * (
-            std::sin(2 * PI * f_low * t) +
-            std::sin(2 * PI * f_high * t)
+            std::sin(2 * M_PI * f_low * t) +
+            std::sin(2 * M_PI * f_high * t)
         );
     }
 
     return signal;
 }
 
-std::vector<float> DSP::make_signal(
-    const std::vector<int>& keys,
-    double tone_dur = 0.1,
-    double gap = 0.1
-) {
+std::vector<float> DSP::make_signal(const std::vector<int>& keys, double tone_dur, double gap) {
 
     std::vector<float> signal;
 
@@ -473,7 +469,7 @@ std::vector<float> DSP::make_signal(
     return signal;
 }
 
-void DSP::sendData(const std::vector<int>& keys,double tone_dur = 0.05,double gap = 0.1){
+void DSP::sendData(const std::vector<int>& keys, double tone_dur, double gap){
 
     std::vector<float> signal =
         make_signal(keys, tone_dur, gap);
