@@ -25,3 +25,6 @@ std::vector<std::int32_t> PhysicalLayer::getData() {
     return data;
 }
 
+void PhysicalLayer::sendData(std::vector<std::int32_t> inputData) {
+ //Mangler Lau og Kirsti kode    
+}
