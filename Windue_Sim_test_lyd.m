@@ -1,7 +1,7 @@
 clear; clc; close all;
 
 %% Indlæs data
-data = readmatrix("DSP/Data_test_dtmf/data9.txt");
+data = readmatrix("DSP/build/data.txt");
 data = data(:);
 
 fs = 8000;
