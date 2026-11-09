@@ -11,7 +11,6 @@
 #include <queue>
 #include <string>
 #include <vector>
-#include "physicalLayer.h"
 
 struct RobotPacketType {
     int robotNr; // Hvilket robot vi skal bruge
