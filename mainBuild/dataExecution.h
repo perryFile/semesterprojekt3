@@ -13,6 +13,7 @@ class DataExecution {
 public:
     DataExecution(float xVelocity = 0.0f, float zVelocity = 0.0f);
     void moveRobot(float xVelocity, float zVelocity);
+    void stopRobot();
     void readCommand(struct TcpPacket packet);
     ~DataExecution() = default;
 

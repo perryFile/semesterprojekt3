@@ -18,13 +18,13 @@ int main(int argc, char** argv) {
     DataExecution dE;
     int blocksize = 379; 
     int samplerate = 8000; 
-    int numIdBits = 1; 
-    int UdpID = 1; 
-    int TcpID = 2; 
+    int channels = 1; 
+    int UdpID = 0; 
+    int TcpID = 1; 
     std::vector<int> toner = {};
     double toneDuration = 0.07; // Duration of each tone in seconds
 
-    DSP dsp(blocksize, samplerate, numIdBits, {UdpID, TcpID});
+    DSP dsp(blocksize, samplerate, channels, {UdpID, TcpID});
 
     toner = dsp.listen(samplerate, toneDuration);
     for (int t : toner) {
@@ -56,10 +56,12 @@ int main(int argc, char** argv) {
         float xVel = dP.getXVelocity();
         std::cout << "valid UDP, angle " << zVel
                     << ", xVelocity " << xVel << "\n";
+        std::this_thread::sleep_for(std::chrono::seconds(1));            
         dE.moveRobot(xVel, zVel);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+        dE.stopRobot();
     }
-
-
+    rclcpp::shutdown();
     
 
     

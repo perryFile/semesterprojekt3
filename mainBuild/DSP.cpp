@@ -252,7 +252,7 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
     for (int i = 0; i < dtmf.size(); i++) {
         if ((dtmf[i][0] == frek1 && dtmf[i][1] == frek2) ||
             (dtmf[i][0] == frek2 && dtmf[i][1] == frek1)) {
-            return i + 1;
+            return i;
         }
     }
 
@@ -264,7 +264,7 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
 
     const int WINDOW_SIZE = 220;
     const int HOP_SIZE = 11;
-    int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
+    int nIdBits = 10; //Hvor mange id skal høre for at aktivere.
 
     const int UdpBlockAmount = 7;
     const int TcpBlockAmount = 10;

@@ -21,6 +21,10 @@ void DataExecution::moveRobot(float xVelocity, float zVelocity) {
     pub_->publish(msg);
 }
 
+void DataExecution::stopRobot() {
+    moveRobot(0.0f, 0.0f);
+}
+
 void DataExecution::readCommand(struct TcpPacket packet) {
     // Assuming command is a simple integer that maps to specific actions
     switch (packet.command) {

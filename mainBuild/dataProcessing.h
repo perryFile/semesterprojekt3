@@ -48,10 +48,10 @@ class DataProcessing {
 
         //skal 100% omnavngives
         const std::vector<RobotPacketType> robotIDtype = {
-            {1, false},  // id 1: robot 1, UDP
-            {2, true},   // id 2: robot 1, TCP
-            {3, false},  // id 3: robot 2, UDP
-            {4, true}    // id 4: robot 2, TCP
+            {0, false},  // id 0: robot 1, UDP
+            {1, true},   // id 1: robot 1, TCP
+            {2, false},  // id 2: robot 2, UDP
+            {3, true}    // id 3: robot 2, TCP
         };
 
         static constexpr std::size_t UDP_PacketSize = 4;
