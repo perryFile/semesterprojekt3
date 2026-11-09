@@ -1,5 +1,4 @@
 #include "controller.h"
-
 #include <cerrno>
 #include <poll.h>
 #include <stdexcept>

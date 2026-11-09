@@ -1,7 +1,8 @@
 //physicalLayer.cpp
 #include "physicalLayer.h"
+#include "DSP.h"
 
-PhysicalLayer::PhysicalLayer() {}
+PhysicalLayer::PhysicalLayer(int blockSize, int samplerate, int channels, std::vector<int> ID) : dsp(blockSize, samplerate, channels, ID) {}
 
 std::vector<std::int32_t> PhysicalLayer::receiveData() {
     // Funktion der skal lytte og hente data ind
@@ -22,6 +23,13 @@ std::vector<std::int32_t> PhysicalLayer::getData() {
     return data;
 }
 
+std::vector<int> PhysicalLayer::listen(int samplerate, double toneDuration) {
+    // Funktion der skal lytte og hente data ind
+    return dsp.listen(samplerate, toneDuration);
+}
+
 void PhysicalLayer::sendData(std::vector<std::int32_t> inputData) {
- //Mangler Lau og Kirsti kode    
+    // Funktion der skal sende data ud
+    dsp.sendData(inputData);
+    
 }

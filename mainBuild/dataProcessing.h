@@ -45,7 +45,7 @@ class DataProcessing {
         bool queueTcpPacket(int robotID);
         std::optional<TcpPacket> popTcpPacket();
         std::size_t tcpQueueSize() const;
-        std::int32_t receivedTcpPacket();
+        std::vector<std::int32_t> ACKTcpPacket(std::int32_t computerID, std::int32_t robotID, std::int32_t packetNumber);
 
         ~DataProcessing() = default;
 

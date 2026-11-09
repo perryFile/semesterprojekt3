@@ -17,8 +17,7 @@ int main()
     DSP dsp(blocksize, samplerate, channels, {robotIDudp, robotIDtcp});
     
     int c = 0;
-    Controller input;
-    
+    Controller input;    
     while(1)
     {
         c = 0;
