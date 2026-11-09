@@ -13,6 +13,7 @@
 
 # define M_PI           3.14159265358979323846
 # define FS             16000
+
 DSP::~DSP() {
     // Stop og luk streamen
     if (stream) {
@@ -23,12 +24,8 @@ DSP::~DSP() {
     Pa_Terminate();
 }
 
-
-
 DSP::DSP(int blockSize, int samplerate, int channels, std::vector<int> ID)
-    : stream(nullptr),
-      blocksize(blockSize),
-      channel(channels), ID(ID)
+    : stream(nullptr), blocksize(blockSize), channel(channels), ID(ID)
 {   
     err = Pa_Initialize();
     if (err != paNoError) {
@@ -111,18 +108,12 @@ void DSP::fileFromData(std::string filename, const std::vector<float>& data) {
     }
 }
 
-std::vector<double> DSP::goertzel(int N, double fs, bool useDtmf) {
-    return goertzel(mData, N, fs, useDtmf);
+std::vector<double> DSP::goertzel(int N, double fs) {
+    return goertzel(mData, N, fs);
 }
 
-std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, bool useDtmf){
-    std::vector<int> mFrek;
-    if(useDtmf){
-        mFrek = mFrek1;
-    }
-    else{
-        mFrek = mFrek2;
-    }
+std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs) {
+    const std::vector<double> mFrek = getDtmfFrequencies();
     
     std::vector<double> omega_frek;
     std::vector<double> denFrek;
@@ -136,21 +127,19 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
     //Vector for output Y for forskellige frekvenser oprettes.
     std::vector<std::vector<double>> Y;
     
-    //Filter for hver frekvens loopes igennem og beregnes. 
-    //Dette er difference funktionen for transferfunktionen af hver bin værdi
-    int nn = 0;
-    for(int i : mFrek){
+    // Filter for hver frekvens loopes igennem og beregnes. 
+    // Dette er difference funktionen for transferfunktionen af hver bin værdi
+    for (std::size_t i = 0; i < mFrek.size(); ++i) {
         int n = 0;
         std::vector<double> y = {0,0};
         for(double x : data){
-            y.push_back((x-denFrek[nn]*y[n+1]-y[n])); //Formel: y(n) = x-a*y(n-1)-y(n-2)
+            y.push_back((x-denFrek[i]*y[n+1]-y[n])); //Formel: y(n) = x-a*y(n-1)-y(n-2)
             n++;
         }
-        nn ++;
         Y.push_back(y);
     }
-    //Magnitude beregnes for hver frekvens ved formlen: sqrt(s[N-1]²+s[N-2]² -2*cos(omega_K)*s[N-1]*s[N-2])
-    //Hvor omega_K = vinkelfrekvens = 2*pi*k/N
+    // Magnitude beregnes for hver frekvens ved formlen: sqrt(s[N-1]²+s[N-2]² -2*cos(omega_K)*s[N-1]*s[N-2])
+    // Hvor omega_K = vinkelfrekvens = 2*pi*k/N
     std::vector<double> magnitude = {};
 
     for (int i = 0; i < mFrek.size(); i++) {
@@ -163,7 +152,7 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
         );
     }
 
-    //Laver den til en single side spectrum.
+    // Laver den til en single side spectrum.
     for(int i =0; i<magnitude.size();i++){
         magnitude[i] = magnitude[i]*2/N;
     }
@@ -172,25 +161,14 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
 
 }
 
-int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
+int DSP::getTone(std::vector<double>& magnitude) {
 
     constexpr double PEAK_RATIO = 2.0;
-    constexpr double NOISE_MARGIN = 3.0; //Skal måske bruges til at indtænke støj
+    constexpr double NOISE_MARGIN = 3.0; // Skal måske bruges til at indtænke støj
 
-    // Select DTMF frequencies
-    std::vector<std::vector<int>> dtmf;
-    std::vector<int> mFrek;
+    const std::vector<double> mFrek = getDtmfFrequencies();
 
-    if (useDtmf) {
-        dtmf = dtmf1;
-        mFrek = mFrek1;
-    }
-    else {
-        dtmf = dtmf2;
-        mFrek = mFrek2;
-    }
-
-    if (magnitude.size() != 8 || mFrek.size() != 8) {
+    if (magnitude.size() != mFrek.size() || mFrek.size() != 8) {
         return -1;
     }
 
@@ -245,18 +223,35 @@ int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
         return -1;
     }
 
-    int frek1 = mFrek[index1];
-    int frek2 = mFrek[index2];
+    double frek1 = mFrek[index1];
+    double frek2 = mFrek[index2];
 
     // Find corresponding DTMF tone
-    for (int i = 0; i < dtmf.size(); i++) {
-        if ((dtmf[i][0] == frek1 && dtmf[i][1] == frek2) ||
-            (dtmf[i][0] == frek2 && dtmf[i][1] == frek1)) {
-            return i;
+    for (const auto& [key, frequencies] : DTMF1) {
+        if ((frequencies.first == frek1 && frequencies.second == frek2) ||
+            (frequencies.first == frek2 && frequencies.second == frek1)) {
+            return key;
         }
     }
 
     return -1;
+}
+
+std::vector<double> DSP::getDtmfFrequencies() const {
+    std::vector<double> frequencies;
+    frequencies.reserve(DTMF1.size() * 2);
+
+    for (const auto& mapping : DTMF1) {
+        frequencies.push_back(mapping.second.first);
+        frequencies.push_back(mapping.second.second);
+    }
+
+    std::sort(frequencies.begin(), frequencies.end());
+    frequencies.erase(
+        std::unique(frequencies.begin(), frequencies.end()),
+        frequencies.end()
+    );
+    return frequencies;
 }
 
 std::vector<int> DSP::listen(int samplerate, double toneDuration) {
@@ -288,9 +283,7 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
     // Korrektionsfaktor for Hann-vinduets dæmpning
     const double correctionFactor = WINDOW_SIZE / windowSum;
 
-    // ----------------------------------------
     // State machine
-    // ----------------------------------------
     enum class State {
         WAIT_ID,
         LISTEN
@@ -322,7 +315,7 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
             mData.end()
         );
 
-        //Bruges til at stoppe modtagelsen af data når der er modtaget 6 blokke.
+        // Bruges til at stoppe modtagelsen af data når der er modtaget 6 blokke.
         if(state == State::LISTEN){
             numberOfBlocks++;
             if(numberOfBlocks >= numberOfBlocksWanted) {
@@ -339,10 +332,8 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
                 return processedData;
             }
         }
-
-        // ----------------------------------------
-        // Sliding window
-        // ----------------------------------------
+ 
+        // Sliding window    
         while (audioBuffer.size() >=
                static_cast<size_t>(WINDOW_SIZE)) {
 
@@ -352,22 +343,17 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
                 audioBuffer.begin() + WINDOW_SIZE
             );
 
-            // ----------------------------------------
             // Anvend Hann-vinduet
-            // ----------------------------------------
             for (int n = 0; n < WINDOW_SIZE; n++) {
                 dataWindow[n] *= hann[n];
             }
 
-            // ----------------------------------------
             // Beregn Goertzel
-            // ----------------------------------------
             std::vector<double> magnitude =
                 goertzel(
                     dataWindow,
                     WINDOW_SIZE,
-                    samplerate,
-                    true
+                    samplerate
                 );
 
             // Korriger amplitude efter Hann
@@ -376,11 +362,9 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
             }
 
             // Find DTMF-tone
-            int tone = getTone(magnitude, true);
+            int tone = getTone(magnitude);
 
-            // ----------------------------------------
             // STATE 1: Vent på ID
-            // ----------------------------------------
             if (state == State::WAIT_ID) {
 
                 if (tone == ID[0]) {
@@ -400,21 +384,14 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
                 }
             }
 
-            // ----------------------------------------
             // STATE 2: Modtag data
-            // ----------------------------------------
             else if (state == State::LISTEN) {
                     toner.push_back(tone);
                 }
             
 
-            // ----------------------------------------
             // Flyt sliding window
-            // ----------------------------------------
-            audioBuffer.erase(
-                audioBuffer.begin(),
-                audioBuffer.begin() + HOP_SIZE
-            );
+            audioBuffer.erase(audioBuffer.begin(), audioBuffer.begin() + HOP_SIZE);
         }
     }
 }
@@ -434,59 +411,35 @@ std::vector<float> DSP::tone(int key, double duration) {
 
         double t = static_cast<double>(i) / FS;
 
-        signal[i] = 0.25f * (
-            std::sin(2 * M_PI * f_low * t) +
-            std::sin(2 * M_PI * f_high * t)
-        );
+        signal[i] = 0.25f * (std::sin(2 * M_PI * f_low * t) + std::sin(2 * M_PI * f_high * t));
     }
 
     return signal;
 }
 
 std::vector<float> DSP::make_signal(const std::vector<int>& keys, double tone_dur, double gap) {
-
     std::vector<float> signal;
-
     int silence_samples = static_cast<int>(gap * FS);
 
     for (int key : keys) {
-
         std::vector<float> samples = tone(key, tone_dur);
 
-        signal.insert(
-            signal.end(),
-            samples.begin(),
-            samples.end()
-        );
+        signal.insert(signal.end(), samples.begin(), samples.end());
 
-        signal.insert(
-            signal.end(),
-            silence_samples,
-            0.0f
-        );
+        signal.insert(signal.end(), silence_samples, 0.0f);
     }
 
     return signal;
 }
 
 void DSP::sendData(const std::vector<int>& keys, double tone_dur, double gap){
-
-    std::vector<float> signal =
-        make_signal(keys, tone_dur, gap);
+    std::vector<float> signal = make_signal(keys, tone_dur, gap);
 
     // Add 100 ms silence at the beginning
-    signal.insert(
-        signal.begin(),
-        FS / 10,
-        0.0f
-    );
+    signal.insert(signal.begin(), FS / 10, 0.0f);
 
     // Add 100 ms silence at the end
-    signal.insert(
-        signal.end(),
-        FS / 10,
-        0.0f
-    );
+    signal.insert(signal.end(), FS / 10, 0.0f);
 
     PaError err = Pa_Initialize();
 

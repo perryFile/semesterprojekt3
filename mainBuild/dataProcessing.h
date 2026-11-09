@@ -28,14 +28,20 @@ class DataProcessing {
         DataProcessing();
         explicit DataProcessing(const std::vector<std::int32_t>& inputData);
         void setData(const std::vector<std::int32_t>& inputData);
-        bool checkId(int robotID, const std::vector<std::int32_t>& data) const;
+        
+        // Movement and velocity functions
         float getAngle(int robotID) const;
         float getXVelocity() const;
         float getZVelocity(int robotID) const;
         float convertAngleData(const std::vector<std::int32_t>& rawAngle) const;
+        
+        // Error checking functions
+        bool checkId(int robotID, const std::vector<std::int32_t>& data) const;
         std::optional<bool> typeControl(const std::vector<std::int32_t>& inputData) const;
         bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) const;
         bool crcCheck(const std::vector<std::int32_t>& inputData) const;
+        
+        // Queue handling functions
         bool queueTcpPacket(int robotID);
         std::optional<TcpPacket> popTcpPacket();
         std::size_t tcpQueueSize() const;
@@ -46,7 +52,6 @@ class DataProcessing {
     private:
         static std::uint8_t crc8(const std::vector<std::int32_t>& data, std::size_t count);
 
-        //skal 100% omnavngives
         const std::vector<RobotPacketType> robotIDtype = {
             {0, false},  // id 0: robot 1, UDP
             {1, true},   // id 1: robot 1, TCP
@@ -60,7 +65,7 @@ class DataProcessing {
         std::vector<std::int32_t> command;
         std::vector<std::int32_t> rawAngle;
         float angle = 0.00f;
-        float xVelocity = 0.15f; // Kan ikke køre hurtigere, da robotten ikke kan følge med.
+        float xVelocity = 0.15f; // Kan ikke køre hurtigere end 0.22f, da robotten ikke kan følge med.
         static constexpr float maxAngle     = 4095.0f;
         static constexpr float maxZVelocity = 1.0f;
         std::queue<TcpPacket> tcpQueue;
