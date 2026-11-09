@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     DataExecution dE;
     int blocksize = 379; 
     int samplerate = 8000; 
-    int numIdBits = 2; 
+    int numIdBits = 1; 
     int UdpID = 1; 
     int TcpID = 2; 
     std::vector<int> toner = {};
@@ -52,10 +52,10 @@ int main(int argc, char** argv) {
         const bool queued = dP.queueTcpPacket(robotID);
         std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
     } else {
-        float zVel = dp.getZVelocity(robotID);
-        float xVel = dp.getXvelocity();
-        std::cout << "valid UDP, angle " << dp.getZVelocity()
-                    << ", xVelocity " << dp.getXVelocity() << "\n";
+        float zVel = dP.getZVelocity(robotID);
+        float xVel = dP.getXVelocity();
+        std::cout << "valid UDP, angle " << zVel
+                    << ", xVelocity " << xVel << "\n";
         dE.moveRobot(xVel, zVel);
     }
 

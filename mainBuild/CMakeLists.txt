@@ -5,6 +5,7 @@ project(mainBuild)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ROS 2 dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -19,26 +20,20 @@ add_executable(main
     physicalLayer.cpp
 )
 
-# Include directories
+# PortAudio stier
 target_include_directories(main PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/portaudio/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/test
 )
 
-# PortAudio
 target_link_directories(main PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/portaudio/lib/.libs
 )
 
+# Link PortAudio
 target_link_libraries(main portaudio)
 
 # ROS 2 dependencies
 ament_target_dependencies(main
     rclcpp
     geometry_msgs
-)
-
-# ROS 2 installation
-install(TARGETS main
-    DESTINATION lib/${PROJECT_NAME}
 )
