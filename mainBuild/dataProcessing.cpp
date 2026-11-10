@@ -215,13 +215,7 @@ std::vector<std::int32_t> DataProcessing::ACKTcpPacket(std::int32_t computerID, 
     // Calculate the CRC for the ACK packet
     std::vector<std::int32_t> ack_packet;
     std::int32_t crc = crc8(output_data, output_data.size());
-    bool crcValid = crcCheck(output_data); // Check if the CRC is correct
-    if (!crcValid) {
-        // Handle the case where the CRC is not valid
-        return {};
-    }
     ack_packet = {output_data[0], output_data[1], output_data[2], output_data[3], crc/16, crc%16}; // Append the CRC to the ACK packet
-
     return ack_packet;
     // Funktionen bruges til at lave ACK når vi modtager en TCP pakke. 
 }
