@@ -3,12 +3,14 @@
 #include <iostream>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 int blocksize = 379; 
 int samplerate = 8000; 
 int channels = 1; 
 std::vector<int> toner = {};
 std::vector<bool> executed = {false, false};
+std::mutex mtx;
 
 void player1()
 {
@@ -23,8 +25,8 @@ void player1()
     Controller input;    
     while(1)
     {
+        mtx.lock();
         int pakkenr = 0;
-
         switch (input.readKey()) {
             case Key::Up:
                 std::cout << "Up arrow pressed" << std::endl;
@@ -32,7 +34,6 @@ void player1()
                     lastPressedKey = 1;
                     data = {robotIDudp, 7, 7, 7};
                     executed[playerNumber] = false;
-
                 }
                 break;
             case Key::Down:
@@ -64,7 +65,7 @@ void player1()
                 std::cout << "Other key pressed" << std::endl;
                 break;
             }
-
+        mtx.unlock();
     }
 
 }
@@ -82,8 +83,8 @@ void player2()
     Controller input;    
     while(1)
     {
+        mtx.lock();
         int pakkenr = 0;
-
         switch (input.readKey()) {
             case Key::W:
                 std::cout << "W key pressed" << std::endl;
@@ -122,7 +123,7 @@ void player2()
                 std::cout << "Other key pressed" << std::endl;
                 break;
             }
-
+        mtx.unlock();
     }
 
 
@@ -130,7 +131,6 @@ void player2()
 
 void queue()
 {
-
 
 
 }
