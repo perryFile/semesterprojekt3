@@ -21,6 +21,7 @@ int main()
     while(1)
     {
         c = 0;
+        int pakkenr = 0;
 
         switch (input.readKey()) {
             case Key::Up:
@@ -30,9 +31,9 @@ int main()
                 break;
             case Key::Down:
                 std::cout << "Down arrow pressed" << std::endl;
-                //OPDATER PAKKENUMMER!
-                data = {robotIDtcp, 15, 15, 15, 11,15};
+                data = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11,15};
                 dsp.sendData(data); 
+                pakkenr++;
                 break;
             case Key::Left:
                 std::cout << "Left arrow pressed" << std::endl;

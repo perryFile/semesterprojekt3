@@ -8,6 +8,7 @@
 #include "dataProcessing.h"
 #include "dataExecution.h"
 #include "DSP.h"
+#include "queue.h"
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
@@ -21,6 +22,13 @@ int main(int argc, char** argv) {
     PhysicalLayer pL(blocksize, samplerate, channels, {UdpID, TcpID});
     DataProcessing dP;
     DataExecution dE;
+
+    //Queues for data
+    Queue pLTodP;
+    Queue dPTodE;
+    Queue dETodP;
+    Queue dPTopL;
+
     std::vector<int> toner = {};
     double toneDuration = 0.07; // Duration of each tone in seconds
 
