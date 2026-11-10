@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     std::vector<int> toner = {};
     double toneDuration = 0.07; // Duration of each tone in seconds
 
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < 20; i++) {
         toner = pL.listen(samplerate, toneDuration);
         for (int t : toner) {
             std::cout << t << " ";

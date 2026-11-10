@@ -70,6 +70,13 @@ class DataProcessing {
         static constexpr float maxZVelocity = 1.0f;
         std::queue<TcpPacket> tcpQueue;
         std::map<int, int> lastPacketNumber;
+
+        // Queue class references
+        &Queue pLTodP; // Reference to the queue for data from PhysicalLayer to DataProcessing
+        &Queue dPTopL; // Reference to the queue for data from DataProcessing to PhysicalLayer
+        &Queue dPTodE; // Reference to the queue for data from DataProcessing to DataExecution
+        &Queue dETodP; // Reference to the queue for data from DataExecution to DataProcessing
+
     };
 
 #endif // DATAPROCESSING_H
