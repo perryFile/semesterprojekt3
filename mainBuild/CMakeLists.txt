@@ -10,7 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
-# Opret executable
+#Opret executable
 add_executable(main
     main.cpp
     init.cpp

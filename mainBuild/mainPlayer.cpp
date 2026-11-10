@@ -4,13 +4,26 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <deque>
+#include <chrono>
+#include <utility>
 
 int blocksize = 379; 
 int samplerate = 8000; 
 int channels = 1; 
+int computerIDudp = 4;
+int computerIDtcp = 5;
+
+DSP dsp(blocksize, samplerate, channels, {computerIDudp, computerIDtcp});
 std::vector<int> toner = {};
 std::vector<bool> executed = {false, false};
+
+std::deque<std::vector<int>> queueList;
+
 std::mutex mtx;
+
+std::vector<int> dataPlayer1 = {0, 0, 0, 0};
+std::vector<int> dataPlayer2 = {0, 0, 0, 0};
 
 void player1()
 {
@@ -20,52 +33,57 @@ void player1()
     std::vector<int> data = {0, 0, 0, 0}; 
     int lastPressedKey = -1;
 
-    DSP dsp(blocksize, samplerate, channels, {robotIDudp, robotIDtcp});
-
     Controller input;    
     while(1)
     {
-        mtx.lock();
         int pakkenr = 0;
         switch (input.readKey()) {
             case Key::Up:
+                mtx.lock();
                 std::cout << "Up arrow pressed" << std::endl;
                 if (lastPressedKey != 1){
                     lastPressedKey = 1;
-                    data = {robotIDudp, 7, 7, 7};
+                    dataPlayer1 = {robotIDudp, 7, 7, 7};
                     executed[playerNumber] = false;
                 }
+                mtx.unlock();
                 break;
             case Key::Down:
+                mtx.lock();
                 std::cout << "Down arrow pressed" << std::endl;
                 if (lastPressedKey != 2){
                     lastPressedKey = 2;
-                    data = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11, 15};
+                    dataPlayer1 = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11, 15};
                     executed[playerNumber] = false;
                 }
                 pakkenr++;
+                mtx.unlock();
                 break;
             case Key::Left:
                 std::cout << "Left arrow pressed" << std::endl;
                 if (lastPressedKey != 3){
                     lastPressedKey = 3;
-                    data = {robotIDudp, 15, 15, 15};
+                    dataPlayer1 = {robotIDudp, 15, 15, 15};
                     executed[playerNumber] = false;
                 }
                 break;
             case Key::Right:
+                mtx.lock();
                 std::cout << "Right arrow pressed" << std::endl;
                 if (lastPressedKey != 4){
                     lastPressedKey = 4;
-                    data = {robotIDudp, 0, 0, 0};
+                    dataPlayer1 = {robotIDudp, 0, 0, 0};
                     executed[playerNumber] = false;
                 }
+                mtx.unlock();
                 break;
             default:
+                mtx.lock();
                 std::cout << "Other key pressed" << std::endl;
+                mtx.unlock();
                 break;
             }
-        mtx.unlock();
+        
     }
 
 }
@@ -78,66 +96,166 @@ void player2()
     std::vector<int> data = {0, 0, 0, 0};   
     int lastPressedKey = -1;
 
-    DSP dsp(blocksize, samplerate, channels, {robotIDudp, robotIDtcp});
-
     Controller input;    
     while(1)
     {
-        mtx.lock();
+        
         int pakkenr = 0;
         switch (input.readKey()) {
             case Key::W:
-                std::cout << "W key pressed" << std::endl;
+                mtx.lock();
                 if (lastPressedKey != 1){
                     lastPressedKey = 1;
-                    data = {robotIDudp, 7, 7, 7};
+                    dataPlayer2 = {robotIDudp, 7, 7, 7};
                     executed[playerNumber] = false;
                 }
+                mtx.unlock();
                 break;
             case Key::S:
-                std::cout << "S key pressed" << std::endl;
+                mtx.lock();
                 if (lastPressedKey != 2){
                     lastPressedKey = 2;
-                    data = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11, 15};
+                    dataPlayer2 = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11, 15};
                     executed[playerNumber] = false;
                 }
                 pakkenr++;
+                mtx.unlock();
                 break;
             case Key::A:
-                std::cout << "A key pressed" << std::endl;
+                mtx.lock();
                 if (lastPressedKey != 3){
                     lastPressedKey = 3;
-                    data = {robotIDudp, 15, 15, 15};
+                    dataPlayer2 = {robotIDudp, 15, 15, 15};
                     executed[playerNumber] = false;
                 }
+                mtx.unlock();
                 break;
             case Key::D:
-                std::cout << "D key pressed" << std::endl;
+                mtx.lock();
                 if (lastPressedKey != 4){
                     lastPressedKey = 4;
-                    data = {robotIDudp, 0, 0, 0};
+                    dataPlayer2 = {robotIDudp, 0, 0, 0};
                     executed[playerNumber] = false;
                 }
+                mtx.unlock();
                 break;
             default:
+                mtx.lock();
                 std::cout << "Other key pressed" << std::endl;
+                mtx.unlock();
                 break;
             }
-        mtx.unlock();
+        
     }
 
+}
 
+void playerInput()
+{
+    const int player1Udp = 0;
+    const int player1Tcp = 1;
+    const int player2Udp = 2;
+    const int player2Tcp = 3;
+    std::vector<int> lastPressedKey = {-1, -1};
+    Controller input;
+
+    while (true) {
+        const Key key = input.readKey();
+        int player = -1;
+        int pressedKey = -1;
+        std::vector<int> data;
+
+        switch (key) {
+            case Key::Up:    player = 0; pressedKey = 1; data = {player1Udp, 7, 7, 7}; break;
+            case Key::Down:  player = 0; pressedKey = 2; data = {player1Tcp, 0, 0, 15, 11, 15}; break;
+            case Key::Left:  player = 0; pressedKey = 3; data = {player1Udp, 15, 15, 15}; break;
+            case Key::Right: player = 0; pressedKey = 4; data = {player1Udp, 0, 0, 0}; break;
+            case Key::W:     player = 1; pressedKey = 1; data = {player2Udp, 7, 7, 7}; break;
+            case Key::S:     player = 1; pressedKey = 2; data = {player2Tcp, 0, 0, 15, 11, 15}; break;
+            case Key::A:     player = 1; pressedKey = 3; data = {player2Udp, 15, 15, 15}; break;
+            case Key::D:     player = 1; pressedKey = 4; data = {player2Udp, 0, 0, 0}; break;
+            case Key::Other:
+                std::cout << "Other key pressed\n";
+                continue;
+        }
+
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (lastPressedKey[player] != pressedKey) {
+                lastPressedKey[player] = pressedKey;
+                (player == 0 ? dataPlayer1 : dataPlayer2) = std::move(data);
+                executed[player] = false;
+            }
+        }
+        std::cout << (player == 0 ? "Player 1 key pressed\n" : "Player 2 key pressed\n");
+    }
 }
 
 void queue()
 {
+    int nextPlayerCheck = 0;
+    while (true) {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            const std::vector<int>& data = nextPlayerCheck == 0 ? dataPlayer1 : dataPlayer2;
+            if (!executed[nextPlayerCheck]) {
+                bool dataExists = false;
+                for (auto& queuedData : queueList) {
+                    if (!queuedData.empty() && data[0] == queuedData[0]) {
+                        queuedData = data;
+                        dataExists = true;
+                        break;
+                    }
+                }
+                if (!dataExists) {
+                    queueList.push_back(data);
+                }
+                executed[nextPlayerCheck] = true;
+            }
+            nextPlayerCheck = 1 - nextPlayerCheck;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+}
 
-
+void playTones()
+{   
+    std::vector<int> dataCopy;
+    while (true) {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (!queueList.empty()) {
+                dataCopy = std::move(queueList.front());
+                queueList.pop_front();
+            }
+        }
+        if (dataCopy.empty()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            continue;
+        }
+        dsp.sendData(dataCopy);
+        dataCopy.clear();
+    }
 }
 
 int main()
 {
-
+    std::thread t1(playerInput);
+    std::thread t3(queue);
+    std::thread t4(playTones);
+    bool run = true;
+    while (run) {
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (dataPlayer1[3] == 7) {
+                run = false;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    t1.join();
+    t3.join();
+    t4.join();
 
     return 0;
 }
