@@ -15,6 +15,7 @@ class Queue{
     public: 
         Queue();
         void push(const std::vector<std::int32_t>& data);
+        std::optional<std::vector<std::int32_t>> TryPop();
         std::optional<std::vector<std::int32_t>> pop();
 
         ~Queue();

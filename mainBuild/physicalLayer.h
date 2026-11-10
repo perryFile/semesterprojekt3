@@ -7,12 +7,12 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <queue>
 #include "DSP.h"
+#include "queue.h"
 
 class PhysicalLayer {
     public: 
-        PhysicalLayer(int blockSize = 379, int samplerate = 8000, int channels = 1, std::vector<int> ID = {0, 1});
+        PhysicalLayer(int blockSize = 379, int samplerate = 8000, int channels = 1, std::vector<int> ID = {0, 1}, &Queue pLToDp, &);
         std::vector<std::int32_t> receiveData();
         void queueData(std::vector<std::int32_t> inputData);
         std::vector<std::int32_t> getData();
