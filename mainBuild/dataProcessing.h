@@ -11,6 +11,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include "queue.h"
 
 struct RobotPacketType {
     int robotNr; // Hvilket robot vi skal bruge
@@ -65,10 +66,10 @@ class DataProcessing {
         std::map<int, int> lastPacketNumber;
 
         // Queue class references
-        &Queue pLTodP; // Reference to the queue for data from PhysicalLayer to DataProcessing
-        &Queue dPTopL; // Reference to the queue for data from DataProcessing to PhysicalLayer
-        &Queue dPTodE; // Reference to the queue for data from DataProcessing to DataExecution
-        &Queue dETodP; // Reference to the queue for data from DataExecution to DataProcessing
+        Queue& pLTodP; // Reference to the queue for data from PhysicalLayer to DataProcessing
+        Queue& dPTopL; // Reference to the queue for data from DataProcessing to PhysicalLayer
+        Queue& dPTodE; // Reference to the queue for data from DataProcessing to DataExecution
+        Queue& dETodP; // Reference to the queue for data from DataExecution to DataProcessing
 
     };
 

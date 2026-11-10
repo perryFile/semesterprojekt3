@@ -43,7 +43,7 @@ void listenForDTMF() {
     }
 }
 
-void sendThread() {
+void ackTCP() {
     while (!stop) {
         if (auto out = dPTopL.TryPop()) {
             std::this_thread::sleep_for(std::chrono::seconds(2));   // fjern hvis forsinkelsen ikke er nødvendig
@@ -79,7 +79,7 @@ void processAndExecute() {
                 // ACK altid, også ved dublet
                 dPTopL.push(dP.ACKTcpPacket(computerID, robotID, tcp->packetNumber));
                 // Udfør kun hvis pakken er ny
-                if (!isDuplicate) dE.readCommand(*tcp);
+                if (!isDuplicate) dE.handleCommand(*tcp);
                 std::cout << "valid TCP, " << (isDuplicate ? "dublet, kun ACK" : "udført") << "\n";
             }
         } else {                                 // UDP
@@ -91,23 +91,15 @@ void processAndExecute() {
     }
 }
 
-void ackTCP(){
-
-    //**VI SKAL HAVE TILFØJET ACKPACKET TIL**
-    //**EN QUEUE ELLER LAVE EN MUTEX ELLER NOGET PÅ DEN**
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    pL.sendData(ackPacket);
-}
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
 
     std::thread t1(listenForDTMF);
-    std::thread t2(sendThread);
+    std::thread t2(ackTCP);
     std::thread t3(processAndExecute);
 
     while (rclcpp::ok() && !stop) std::this_thread::sleep_for(100ms);
-
     stop = true;
     pL.requestStop();   // Request to stop the DSP listening thread
 
