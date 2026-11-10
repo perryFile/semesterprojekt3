@@ -41,10 +41,7 @@ class DataProcessing {
         bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) const;
         bool crcCheck(const std::vector<std::int32_t>& inputData) const;
         
-        // Queue handling functions
-        bool queueTcpPacket(int robotID);
-        std::optional<TcpPacket> popTcpPacket();
-        std::size_t tcpQueueSize() const;
+        std::optional<TcpPacket> decodeTcpPacket(int robotID, bool& isDuplicate);
         std::vector<std::int32_t> ACKTcpPacket(std::int32_t computerID, std::int32_t robotID, std::int32_t packetNumber);
 
         ~DataProcessing() = default;
@@ -62,13 +59,9 @@ class DataProcessing {
         static constexpr std::size_t UDP_PacketSize = 4;
         static constexpr std::size_t TCP_PacketSize = 6;
         std::vector<std::int32_t> data;
-        std::vector<std::int32_t> command;
-        std::vector<std::int32_t> rawAngle;
-        float angle = 0.00f;
         float xVelocity = 0.15f; // Kan ikke køre hurtigere end 0.22f, da robotten ikke kan følge med.
         static constexpr float maxAngle     = 4095.0f;
         static constexpr float maxZVelocity = 1.0f;
-        std::queue<TcpPacket> tcpQueue;
         std::map<int, int> lastPacketNumber;
 
         // Queue class references

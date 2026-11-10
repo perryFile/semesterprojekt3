@@ -17,6 +17,7 @@ class PhysicalLayer {
         void sendData(std::vector<std::int32_t> inputData);
         void queueData(std::vector<std::int32_t> inputData);
         std::vector<int> listen(int samplerate, double toneDuration = 0.07);
+        void requestStop(); git config pull.rebase false // Request to stop the DSP listening thread
         ~PhysicalLayer() = default;
 
     private: 

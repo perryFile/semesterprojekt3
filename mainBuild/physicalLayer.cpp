@@ -20,6 +20,7 @@ void PhysicalLayer::sendData(std::vector<std::int32_t> inputData) {
     
 }
 
-void PhysicalLayer::queueData(std::vector<std::int32_t> inputData) {
-    pLTodP.push(inputData);
+void PhysicalLayer::requestStop() {
+    dsp.requestStop();
 }
+
