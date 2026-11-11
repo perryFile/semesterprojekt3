@@ -60,10 +60,11 @@ int main(int argc, char** argv) {
             std::this_thread::sleep_for(std::chrono::seconds(1));            
             dE.moveRobot(xVel, zVel);
             std::this_thread::sleep_for(std::chrono::seconds(2));
-            dE.stopRobot();
+            // dE.stopRobot();
         }
-        rclcpp::shutdown();
+        
     }
+    rclcpp::shutdown();
 
     
 }
