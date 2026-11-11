@@ -12,7 +12,7 @@
 #include "init.h"
 
 # define M_PI           3.14159265358979323846
-# define FS             16000
+
 DSP::~DSP() {
     // Stop og luk streamen
     if (stream) {
@@ -495,4 +495,62 @@ void DSP::sendData(const std::vector<int>& keys, double tone_dur, double gap){
                   << Pa_GetErrorText(err) << std::endl;
         return;
     }
+
+    PaStream* stream = nullptr;
+
+    err = Pa_OpenDefaultStream(
+        &stream,
+        0,
+        1,
+        paFloat32,
+        FS,
+        paFramesPerBufferUnspecified,
+        nullptr,
+        nullptr
+    );
+
+    if (err != paNoError) {
+        std::cerr << "PortAudio stream error: "
+                  << Pa_GetErrorText(err) << std::endl;
+
+        Pa_Terminate();
+        return;
+    }
+
+    err = Pa_StartStream(stream);
+
+    if (err != paNoError) {
+        std::cerr << "PortAudio start error: "
+                  << Pa_GetErrorText(err) << std::endl;
+
+        Pa_CloseStream(stream);
+        Pa_Terminate();
+        return;
+    }
+
+    // Write all audio samples
+    err = Pa_WriteStream(
+        stream,
+        signal.data(),
+        static_cast<unsigned long>(signal.size())
+    );
+
+    if (err != paNoError) {
+        std::cerr << "PortAudio write error: "
+                  << Pa_GetErrorText(err) << std::endl;
+    }
+
+    // Stop stream gracefully
+    PaError stopErr = Pa_StopStream(stream);
+
+    if (stopErr != paNoError) {
+        std::cerr << "PortAudio stop error: "
+                  << Pa_GetErrorText(stopErr) << std::endl;
+    }
+
+    // Close stream
+    Pa_CloseStream(stream);
+
+    // Terminate PortAudio
+    Pa_Terminate();
 }

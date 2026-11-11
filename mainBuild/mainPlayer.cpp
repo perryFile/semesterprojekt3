@@ -7,6 +7,7 @@
 #include <poll.h>
 #include <termios.h>
 #include <unistd.h>
+#include <iostream>
 
 namespace {
 
@@ -105,12 +106,13 @@ int main()
     int samplerate = 8000; 
     int channels = 1; 
     std::vector<int> toner = {};
-    double toneDuration = 0.07; // Duration of each tone in seconds
 
     DSP dsp(blocksize, samplerate, channels, {robotIDudp, robotIDtcp});
     
     int c = 0;
     TerminalInput input;
+
+    
     
     while(1)
     {
@@ -118,28 +120,32 @@ int main()
 
         switch (input.readKey()) {
             case Key::Up:
-                // UP
+                std::cout << "Up arrow pressed" << std::endl;
                 data = {robotIDudp, 7, 7, 7};
+                dsp.sendData(data); 
                 break;
             case Key::Down:
-                // DOWN
+                std::cout << "Down arrow pressed" << std::endl;
                 data = {robotIDudp, 0, 0, 0};
+                dsp.sendData(data); 
                 break;
             case Key::Left:
-                // LEFT
+                std::cout << "Left arrow pressed" << std::endl;
                 data = {robotIDudp, 15, 15, 15};
+                dsp.sendData(data); 
                 break;
             case Key::Right:
-                // RIGHT
+                std::cout << "Right arrow pressed" << std::endl;
                 data = {robotIDudp, 0, 0, 0};
+                dsp.sendData(data); 
                 break;
             default:
-                // not arrow
+                std::cout << "Other key pressed" << std::endl;
                 break;
             }
 
     }
-    dsp.sendData(data); 
+    
 
     return 0;
 }

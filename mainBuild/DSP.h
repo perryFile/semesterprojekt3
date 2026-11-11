@@ -37,6 +37,7 @@ class DSP {
         int channel;
         PaStream* stream;
         std::vector<int> ID = {};
+        int FS = 16000;
         const std::map<int, std::pair<double, double>> DTMF1 = {
             {0,  {697, 1209}}, {1,  {697, 1336}},
             {2,  {697, 1477}}, {3,  {697, 1633}},
