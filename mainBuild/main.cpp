@@ -26,43 +26,44 @@ int main(int argc, char** argv) {
 
     DSP dsp(blocksize, samplerate, channels, {UdpID, TcpID});
 
-    toner = dsp.listen(samplerate, toneDuration);
-    for (int t : toner) {
-        std::cout << t << " ";
+    for(int i = 0; i < 5; i++) {
+        toner = dsp.listen(samplerate, toneDuration);
+        for (int t : toner) {
+            std::cout << t << " ";
+        }
+        std::cout << std::endl;
+
+        pL.queueData(toner);
+        const std::vector<std::int32_t> packet = pL.getData();
+
+        std::cout << "Received packet: {";
+        for (std::size_t i = 0; i < packet.size(); i++) {
+            std::cout << packet[i] << (i + 1 < packet.size() ? ", " : "");
+        }
+        std::cout << "}\n";
+
+        const int robotID = packet[0];
+        dP.setData(packet);
+
+        if (!dP.isValidPacket(robotID, packet)) {
+            std::cout << "INVALID\n"; 
+        }
+
+        if (dP.typeControl(packet).value()) {
+            const bool queued = dP.queueTcpPacket(robotID);
+            std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
+        } else {
+            float zVel = dP.getZVelocity(robotID);
+            float xVel = dP.getXVelocity();
+            std::cout << "valid UDP, angle " << zVel
+                        << ", xVelocity " << xVel << "\n";
+            std::this_thread::sleep_for(std::chrono::seconds(1));            
+            dE.moveRobot(xVel, zVel);
+            std::this_thread::sleep_for(std::chrono::seconds(2));
+            dE.stopRobot();
+        }
+        rclcpp::shutdown();
     }
-    std::cout << std::endl;
-
-    pL.queueData(toner);
-    const std::vector<std::int32_t> packet = pL.getData();
-
-    std::cout << "Received packet: {";
-    for (std::size_t i = 0; i < packet.size(); i++) {
-        std::cout << packet[i] << (i + 1 < packet.size() ? ", " : "");
-    }
-    std::cout << "}\n";
-
-    const int robotID = packet[0];
-    dP.setData(packet);
-
-    if (!dP.isValidPacket(robotID, packet)) {
-        std::cout << "INVALID\n"; 
-    }
-
-    if (dP.typeControl(packet).value()) {
-        const bool queued = dP.queueTcpPacket(robotID);
-        std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
-    } else {
-        float zVel = dP.getZVelocity(robotID);
-        float xVel = dP.getXVelocity();
-        std::cout << "valid UDP, angle " << zVel
-                    << ", xVelocity " << xVel << "\n";
-        std::this_thread::sleep_for(std::chrono::seconds(1));            
-        dE.moveRobot(xVel, zVel);
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-        dE.stopRobot();
-    }
-    rclcpp::shutdown();
-    
 
     
 }
