@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 
     DSP dsp(blocksize, samplerate, channels, {UdpID, TcpID});
 
-    for(int i = 0; i < 5; i++) {
+    for(int i = 0; i < 20; i++) {
         toner = dsp.listen(samplerate, toneDuration);
         for (int t : toner) {
             std::cout << t << " ";
