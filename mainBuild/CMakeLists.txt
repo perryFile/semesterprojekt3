@@ -10,7 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
 # Opret executable
-add_executable(maintest
+add_executable(main
     main.cpp
     init.cpp
     DSP.cpp
@@ -22,16 +22,16 @@ add_executable(maintest
 )
 
 # PortAudio stier
-target_include_directories(maintest PRIVATE
+target_include_directories(main PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/portaudio/include
 )
 
-target_link_directories(maintest PRIVATE
+target_link_directories(main PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/portaudio/lib/.libs
 )
 
 # Link PortAudio
-target_link_libraries(maintest PRIVATE portaudio)
+target_link_libraries(main PRIVATE portaudio)
 
 target_include_directories(turtlebot_node PRIVATE test)
 ament_target_dependencies(turtlebot_node rclcpp geometry_msgs)
