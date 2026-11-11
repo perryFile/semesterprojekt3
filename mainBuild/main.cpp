@@ -56,10 +56,8 @@ int main(int argc, char** argv) {
             float zVel = dP.getZVelocity(robotID);
             float xVel = dP.getXVelocity();
             std::cout << "valid UDP, angle " << zVel
-                        << ", xVelocity " << xVel << "\n";
-            std::this_thread::sleep_for(std::chrono::seconds(1));            
+                        << ", xVelocity " << xVel << "\n";          
             dE.moveRobot(xVel, zVel);
-            std::this_thread::sleep_for(std::chrono::seconds(2));
             // dE.stopRobot();
         }
         
