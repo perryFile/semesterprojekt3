@@ -12,13 +12,13 @@
 
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
-    // Test file for controlling the robot with TCP packet commands. 
+    // Test file for controlling the robot with UDP packet commands. 
     PhysicalLayer pL;
     DataProcessing dP;
     DataExecution dE;
     
 
-    // Move the robot with the received TCP packet commands.
+    // Move the robot with the received TCP packet commands or perform command with TCP.
     while (rclcpp::ok()) {
         const std::vector<std::int32_t> packet = pL.getData();
         if (packet.empty()) {
