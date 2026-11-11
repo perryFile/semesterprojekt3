@@ -1,15 +1,12 @@
 //physicalLayer.cpp
 #include "physicalLayer.h"
 
-PhysicalLayer::PhysicalLayer() {
-    
-}
+PhysicalLayer::PhysicalLayer() {}
 
 std::vector<std::int32_t> PhysicalLayer::receiveData() {
     // Funktion der skal lytte og hente data ind
     return data;
 }
-
 
 void PhysicalLayer::queueData(std::vector<std::int32_t> inputData) {
     queuedData.push(inputData);

@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <cmath>
 
-//Dette er hjælpe funktioner
+// Dette er hjælpe funktioner
 
 double sum(const std::vector<double> &vec) {
     double total = 0;

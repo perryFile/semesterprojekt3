@@ -16,13 +16,22 @@ bool DataProcessing::checkId(int robotID, const std::vector<std::int32_t>& data)
 }
 
 float DataProcessing::getAngle(int robotID) const {
-    if (!checkId(robotID, data))       return 0.0f;
-    if (!isValidPacket(robotID, data)) return 0.0f;
+    if (!checkId(robotID, data))  {     
+    return 0.0f;
+    }
+    
+    if (!isValidPacket(robotID, data)) {
+        return 0.0f;
+    }
 
     const bool isTcp = typeControl(data).value();
-    if (isTcp) return 0.0f;
+    if (isTcp) {
+        return 0.0f;
+    }
 
-    if (data.size() < 2) return 0.0f;
+    if (data.size() < 2) {
+        return 0.0f;
+    }
 
     // data[0] is robotID, everything after it is the angle
     std::vector<std::int32_t> rawAngle(data.begin() + 1, data.end());;
@@ -88,7 +97,7 @@ std::optional<bool> DataProcessing::typeControl(const std::vector<std::int32_t>&
         return true; // TCP   
     }
 
-    return std::nullopt;                                    // ugyldig længde
+    return std::nullopt;                                    
 }
 
 // Passer robotID med om pakken der er sendt er en TCP eller UDP

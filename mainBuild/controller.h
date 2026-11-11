@@ -2,26 +2,33 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_h
 
-#include <array>
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
-#include <map>
-#include <optional>
-#include <queue>
 #include <string>
-#include <vector>
+#include <termios.h>
 
-class Controller {
-    public:
-        Controller();
-        int convertInputToTone(std::string input);
-
-        ~Controller() = default;
-
-    private:
-        
+enum class Key {
+    Up,
+    Down,
+    Left,
+    Right,
+    Other
 };
 
+class Controller {
+public:
+    Controller();
+    ~Controller();
+
+    Controller(const Controller&) = delete;
+    Controller& operator=(const Controller&) = delete;
+
+    Key readKey() const;
+
+private:
+    char readByte() const;
+    bool readByteWithTimeout(char& value) const;
+
+    termios original_{};
+    bool active_ = false;
+};
 
 #endif  // CONTROLLER_H

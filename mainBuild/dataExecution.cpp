@@ -26,7 +26,6 @@ void DataExecution::stopRobot() {
 }
 
 void DataExecution::readCommand(struct TcpPacket packet) {
-    // Assuming command is a simple integer that maps to specific actions
     switch (packet.command) {
         case 0: // Bomb
             // Disable controls for a short duration

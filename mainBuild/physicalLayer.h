@@ -18,7 +18,6 @@ class PhysicalLayer {
         void sendData(std::vector<std::int32_t> inputData);
         ~PhysicalLayer() = default;
     
-
     private: 
         std::vector<std::int32_t> data;
         std::queue<std::vector<std::int32_t>> queuedData;
