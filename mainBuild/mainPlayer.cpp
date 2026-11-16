@@ -30,7 +30,8 @@ int main()
                 break;
             case Key::Down:
                 std::cout << "Down arrow pressed" << std::endl;
-                data = {robotIDudp, 0, 0, 0};
+                //OPDATER PAKKENUMMER!
+                data = {robotIDtcp, 15, 15, 15, 11,15};
                 dsp.sendData(data); 
                 break;
             case Key::Left:
