@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
     std::vector<int> toner = {};
     double toneDuration = 0.07; // Duration of each tone in seconds
 
-    for(int i = 0; i < 20; i++) {
+    for(int i = 0; i < 5; i++) {
         toner = pL.listen(samplerate, toneDuration);
         for (int t : toner) {
             std::cout << t << " ";
@@ -49,16 +49,23 @@ int main(int argc, char** argv) {
 
         if (dP.typeControl(packet).value()) {
             const bool queued = dP.queueTcpPacket(robotID);
-            std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
             //Sende ACK tilbage
-            int robotID = 2;
+            int robotID_x = 2;
             int packetNumber = 2;
             int computerID = 4;
-            std::vector<std::int32_t> ackPacket = dP.ACKTcpPacket(computerID, robotID, packetNumber); // Vi modtager en TCP pakke, så vi sender en ACK tilbage til robotten
-            if (!ackPacket.empty()) {
-                pL.sendData(ackPacket);
+            if (queued){
+                std::vector<std::int32_t> ackPacket = dP.ACKTcpPacket(computerID, robotID_x, packetNumber); // Vi modtager en TCP pakke, så vi sender en ACK tilbage til robotten
+                std::cout << "ACK packet: {";
+                for (std::size_t i = 0; i < ackPacket.size(); i++) {
+                    std::cout << ackPacket[i] << (i + 1 < ackPacket.size() ? ", " : "");
+                }
+                std::cout << "}\n";
+                pL.sendData(ackPacket); // Send ACK packet back to robot
             }
-        } else {
+            std::cout << "valid TCP, " << (queued ? "queued" : "not queued (duplicate)") << "\n";
+            
+           
+        } else {    
             float zVel = dP.getZVelocity(robotID);
             float xVel = dP.getXVelocity();
             std::cout << "valid UDP, angle " << zVel
