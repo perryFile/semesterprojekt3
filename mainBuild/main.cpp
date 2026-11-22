@@ -56,6 +56,7 @@ void listenForDTMF(){
 
 void processAndExecute(){
     while(true){
+        mtx.lock();
         robotID = packet[0];
         dP.setData(packet);
 
@@ -97,11 +98,15 @@ void processAndExecute(){
             dE.moveRobot(xVel, zVel);
             
         }
-    }   
+    }
+    mtx.unlock(); //Måske skal denne sættes et andet sted?    
         
 }
 
 void ackTCP(){
+
+    //**VI SKAL HAVE TILFØJET ACKPACKET TIL**
+    //**EN QUEUE ELLER LAVE EN MUTEX ELLER NOGET PÅ DEN**
     std::this_thread::sleep_for(std::chrono::seconds(2));
     pL.sendData(ackPacket);
 }
