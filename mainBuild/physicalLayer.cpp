@@ -2,24 +2,10 @@
 #include "physicalLayer.h"
 #include "DSP.h"
 
-PhysicalLayer::PhysicalLayer(int blockSize, int samplerate, int channels, std::vector<int> ID) : dsp(blockSize, samplerate, channels, ID) {}
+PhysicalLayer::PhysicalLayer(int blockSize, int samplerate, int channels, std::vector<int> ID, Queue& pLTodP, Queue& dPTopL) : dsp(blockSize, samplerate, channels, ID, &pLTodP, &dPTopL), pLTodP(pLTodP), dPTopL(dPTopL) {}
 
 std::vector<std::int32_t> PhysicalLayer::receiveData() {
     // Funktion der skal lytte og hente data ind
-    return data;
-}
-
-void PhysicalLayer::queueData(std::vector<std::int32_t> inputData) {
-    queuedData.push(inputData);
-}
-
-std::vector<std::int32_t> PhysicalLayer::getData() {
-    if (!queuedData.empty()) {
-        data = queuedData.front();
-        queuedData.pop();
-    } else {
-        data.clear(); 
-    }
     return data;
 }
 

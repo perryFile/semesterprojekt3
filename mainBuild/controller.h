@@ -10,6 +10,10 @@ enum class Key {
     Down,
     Left,
     Right,
+    W,
+    A,
+    S,
+    D,
     Other
 };
 

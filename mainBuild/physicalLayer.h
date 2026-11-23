@@ -12,19 +12,19 @@
 
 class PhysicalLayer {
     public: 
-        PhysicalLayer(int blockSize = 379, int samplerate = 8000, int channels = 1, std::vector<int> ID = {0, 1}, &Queue pLToDp, &);
+        PhysicalLayer(int blockSize = 379, int samplerate = 8000, int channels = 1, std::vector<int> ID = {0, 1}, &Queue pLTodP, &Queue dPTopL);
         std::vector<std::int32_t> receiveData();
-        void queueData(std::vector<std::int32_t> inputData);
-        std::vector<std::int32_t> getData();
         void sendData(std::vector<std::int32_t> inputData);
+        void queueData(std::vector<std::int32_t> inputData);
         std::vector<int> listen(int samplerate, double toneDuration = 0.07);
         void requestStop(); git config pull.rebase false // Request to stop the DSP listening thread
         ~PhysicalLayer() = default;
-    
+
     private: 
         std::vector<std::int32_t> data;
-        std::queue<std::vector<std::int32_t>> queuedData;
         DSP dsp; // Instance of DSP class for audio processing
+        Queue& pLTodP; // Reference to the queue for data from PhysicalLayer to DataProcessing
+        Queue& dPTopL; // Reference to the queue for data from DataProcessing to PhysicalLayer
 };
 
 #endif // PHYSICALLAYER_H
