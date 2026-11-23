@@ -1,16 +1,8 @@
-
 #include "dataExecution.h"
-#include <chrono>
-#include <thread>
 
-using namespace std::chrono_literals;
-
-DataExecution::DataExecution(float xVelocity, float zVelocity)
-    : xVelocity(xVelocity),
-      zVelocity(zVelocity),
-      node_(rclcpp::Node::make_shared("data_execution")),
+DataExecution::DataExecution()
+    : node_(rclcpp::Node::make_shared("data_execution")),
       pub_(node_->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10)) {}
-
 
 void DataExecution::moveRobot(float xVelocity, float zVelocity) {
     geometry_msgs::msg::TwistStamped msg;
@@ -25,26 +17,31 @@ void DataExecution::stopRobot() {
     moveRobot(0.0f, 0.0f);
 }
 
-void DataExecution::readCommand(struct TcpPacket packet) {
-    switch (packet.command) {
-        case 0: // Bomb
-            // Disable controls for a short duration
+void DataExecution::handleCommand(const ExecMsg& msg) {
+    const auto now = std::chrono::steady_clock::now();
+
+    switch (msg.commandType) {
+        case ExecMsg::commandType::None:
+            if (now < disabledUntil) {
+                moveRobot(0.0f, 0.0f);          // Bomb aktiv
+            } else {
+                const float xVel = (inverted ? -msg.xVelocity : msg.xVelocity) * speedScale;
+                moveRobot(xVel, msg.zVelocity);
+            }
+            break;
+        case ExecMsg::commandType::Bomb:
+            disabledUntil = now + std::chrono::seconds(3);
             moveRobot(0.0f, 0.0f);
-            std::this_thread::sleep_for(3s); // Robot is disabled for 3 seconds
             break;
-        case 1: // Speed boost
-            xVelocity = 0.22f; // Set to maximum speed
-            moveRobot(xVelocity, 0.0f);
+        case ExecMsg::commandType::SpeedBoost:
+            speedScale = 0.22f / 0.15f;         // 0.15 -> 0.22
             break;
-        case 2: // Inverted controls
-            // Invert the x-velocity for a short duration
-            moveRobot(-xVelocity, 0.0f);
+        case ExecMsg::commandType::InvertedControls:
+            inverted = !inverted;
             break;
-        case 3: // Stop ability
-            xVelocity = 0.15f;
-            break;
-        default:
-            RCLCPP_WARN(node_->get_logger(), "Unknown command received: %d", packet.command);
+        case ExecMsg::commandType::StopAbility:
+            speedScale = 1.0f;
+            inverted = false;
             break;
     }
 }

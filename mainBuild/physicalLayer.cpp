@@ -33,3 +33,8 @@ void PhysicalLayer::sendData(std::vector<std::int32_t> inputData) {
     dsp.sendData(inputData);
     
 }
+
+void PhysicalLayer::requestStop() {
+    dsp.requestStop();
+}
+

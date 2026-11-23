@@ -3,6 +3,7 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <atomic>
 #include "../portaudio/include/portaudio.h"
 
 #ifndef  DSP_H
@@ -26,6 +27,7 @@ class DSP {
         std::vector<float> make_signal(const std::vector<int>& keys, double tone_dur = 0.03, double gap = 0.04);
         void sendData(const std::vector<int>& keys, double tone_dur = 0.03, double gap = 0.04);
 
+        void requestStop(); //Stop flag for threads
     private:
         std::vector<float> mData;
         std::vector<double> getDtmfFrequencies() const;
@@ -45,6 +47,8 @@ class DSP {
             {12, {941, 1209}}, {13, {941, 1336}},
             {14, {941, 1477}}, {15, {941, 1633}}
         };
+        std::atomic<bool> stopRequested{false}; //Stop flag for threads
+
 };
 
 #endif // DSP_H

@@ -172,11 +172,13 @@ bool DataProcessing::crcCheck(const std::vector<std::int32_t>& inputData) const 
     return crc8(inputData, payloadLen) == received;
 }
 
-bool DataProcessing::queueTcpPacket(int robotID) {
-    // Vi tjekker for fejl i pakken og om det er en tcp pakke (typeControl returnerer true hvis det er en TCP)
-    if (!checkId(robotID, data))       return false;
-    if (!isValidPacket(robotID, data)) return false;
-    if (!typeControl(data).value())    return false;
+std::optional<TcpPacket> DataProcessing::decodeTcpPacket(int robotID, bool& isDuplicate) {
+    isDuplicate = false;
+
+    if (!checkId(robotID, data))       return std::nullopt;
+    if (!isValidPacket(robotID, data)) return std::nullopt;
+    if (!typeControl(data).value())    return std::nullopt;
+
     const TcpPacket packet{
         data[0],        // ID
         data[1] * 16 + data[2],   // Pakkenummer
@@ -218,4 +220,25 @@ std::vector<std::int32_t> DataProcessing::ACKTcpPacket(std::int32_t computerID, 
     ack_packet = {output_data[0], output_data[1], output_data[2], output_data[3], crc/16, crc%16}; // Append the CRC to the ACK packet
     return ack_packet;
     // Funktionen bruges til at lave ACK når vi modtager en TCP pakke. 
+}
+
+std::optional<TcpPacket> DataProcessing::decodeTcpPacket(int robotID, bool& isDuplicate) {
+    isDuplicate = false;
+
+    if (!checkId(robotID, data))           return std::nullopt;
+    if (data.size() != TCP_PacketSize)     return std::nullopt;
+
+    const TcpPacket packet{
+        data[0],                  // ID
+        data[1] * 16 + data[2],   // Pakkenummer
+        data[3]                   // Kommando
+    };
+
+    const auto it = lastPacketNumber.find(packet.robotID);
+    isDuplicate = (it != lastPacketNumber.end() && it->second == packet.packetNumber);
+    if (!isDuplicate) {
+        lastPacketNumber[packet.robotID] = packet.packetNumber;
+    }
+
+    return packet;
 }

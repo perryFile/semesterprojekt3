@@ -3,25 +3,41 @@
 #define DATAEXECUTION_H
 
 #include <memory>
-#include <vector>
+#include <chrono>
 #include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include "dataProcessing.h"
 
+struct ExecMsg {
+    enum class commandType {
+        None, 
+        Bomb,
+        SpeedBoost,
+        InvertedControls,
+        StopAbility
+    };  
+    float xVelocity = 0.0f;
+    float zVelocity = 0.0f;
+    commandType commandType = commandType::None;
+
+};
 
 class DataExecution {
 public:
-    DataExecution(float xVelocity = 0.0f, float zVelocity = 0.0f);
-    void moveRobot(float xVelocity, float zVelocity);
+    DataExecution();
+    void handleCommand(const ExecMsg& msg);
     void stopRobot();
-    void readCommand(struct TcpPacket packet);
     ~DataExecution() = default;
 
 private:
-    float xVelocity;
-    float zVelocity;
+    void moveRobot(float xVelocity, float zVelocity);
+    
     std::shared_ptr<rclcpp::Node> node_;
     rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_;
+
+    std::chrono::steady_clock::time_point disabledUntil{};
+    float speedScale = 1.0f;
+    bool  inverted   = false;
+
 };
 
 #endif // DATAEXECUTION_H

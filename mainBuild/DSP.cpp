@@ -298,7 +298,7 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
     std::string protocol = "UDP"; // Default protocol
 
     std::cout << "Venter på ID..." << std::endl;
-    while (true) {
+    while (!stopRequested) {
 
         // Indsaml nye samples
         Gathering();
@@ -393,6 +393,9 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
             audioBuffer.erase(audioBuffer.begin(), audioBuffer.begin() + HOP_SIZE);
         }
     }
+
+    return {}; // Returns an empty vector if stopRequested is true
+
 }
 
 std::vector<float> DSP::tone(int key, double duration) {
@@ -433,76 +436,30 @@ std::vector<float> DSP::make_signal(const std::vector<int>& keys, double tone_du
 
 void DSP::sendData(const std::vector<int>& keys, double tone_dur, double gap){
     std::vector<float> signal = make_signal(keys, tone_dur, gap);
-
     // Add 100 ms silence at the beginning
     signal.insert(signal.begin(), FS / 10, 0.0f);
-
     // Add 100 ms silence at the end
     signal.insert(signal.end(), FS / 10, 0.0f);
 
-    PaError err = Pa_Initialize();
+    PaStream* outStream = nullptr;
+    PaError e = Pa_OpenDefaultStream(&outStream, 0, 1, paFloat32, FS,
+                                     paFramesPerBufferUnspecified, nullptr, nullptr);
+    if (e != paNoError) { std::cerr << Pa_GetErrorText(e) << std::endl; return; }
 
-    if (err != paNoError) {
-        std::cerr << "PortAudio initialization error: "
-                  << Pa_GetErrorText(err) << std::endl;
-        return;
-    }
-
-    PaStream* stream = nullptr;
-
-    err = Pa_OpenDefaultStream(
-        &stream,
-        0,
-        1,
-        paFloat32,
-        FS,
-        paFramesPerBufferUnspecified,
-        nullptr,
-        nullptr
-    );
-
-    if (err != paNoError) {
-        std::cerr << "PortAudio stream error: "
-                  << Pa_GetErrorText(err) << std::endl;
-
-        Pa_Terminate();
-        return;
-    }
-
-    err = Pa_StartStream(stream);
-
-    if (err != paNoError) {
-        std::cerr << "PortAudio start error: "
-                  << Pa_GetErrorText(err) << std::endl;
-
-        Pa_CloseStream(stream);
-        Pa_Terminate();
-        return;
-    }
+    e = Pa_StartStream(outStream);
+    if (e != paNoError) { Pa_CloseStream(outStream); return; }
 
     // Write all audio samples
-    err = Pa_WriteStream(
-        stream,
-        signal.data(),
-        static_cast<unsigned long>(signal.size())
-    );
+    e = Pa_WriteStream(outStream, signal.data(), static_cast<unsigned long>(signal.size()));
+    if (e != paNoError) std::cerr << Pa_GetErrorText(e) << std::endl;
 
-    if (err != paNoError) {
-        std::cerr << "PortAudio write error: "
-                  << Pa_GetErrorText(err) << std::endl;
-    }
-
-    // Stop stream gracefully
-    PaError stopErr = Pa_StopStream(stream);
-
-    if (stopErr != paNoError) {
-        std::cerr << "PortAudio stop error: "
-                  << Pa_GetErrorText(stopErr) << std::endl;
-    }
+    // Stop stream 
+    Pa_StopStream(outStream);
 
     // Close stream
-    Pa_CloseStream(stream);
+    Pa_CloseStream(outStream);
+}
 
-    // Terminate PortAudio
-    Pa_Terminate();
+void DSP::requestStop() {
+    stopRequested = true;
 }
