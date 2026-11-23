@@ -26,5 +26,5 @@ std::vector<std::int32_t> PhysicalLayer::getData() {
 }
 
 void PhysicalLayer::sendData(std::vector<std::int32_t> inputData) {
- //Mangler Lau og Kirsti kode    
+ //Mangler Lau og Kirsti kode til at sende data ud.    
 }
