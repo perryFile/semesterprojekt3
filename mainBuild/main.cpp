@@ -99,8 +99,8 @@ void processAndExecute(){
             dE.moveRobot(xVel, zVel);
             
         }
+        mtx.unlock(); //Måske skal denne sættes et andet sted?    
     }
-    mtx.unlock(); //Måske skal denne sættes et andet sted?    
         
 }
 
@@ -117,8 +117,6 @@ int main(int argc, char** argv) {
 
     //Queues for data
     Queue pLTodP;
-    Queue dPTodE;
-    Queue dETodP;
     Queue dPTopL;
 
     std::thread t1(listenForDTMF);
