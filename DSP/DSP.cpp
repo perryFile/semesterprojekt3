@@ -173,41 +173,82 @@ std::vector<double> DSP::goertzel(std::vector<float> data, int N, double fs, boo
 }
 
 int DSP::getTone(std::vector<double>& magnitude, bool useDtmf) {
-    //Bruges til at finde hvilken dtmf tone der matcher magnitude spektrummet.
-    //Finder højste og næste højeste værdi i magnitude
-    double threshold = sum(magnitude)/10; // Laver en threshold værdi som er 1/5 af summen af magnitude. Dette bruges til at filtrere støj væk.
+
+    constexpr double PEAK_RATIO = 2.0;
+    constexpr double NOISE_MARGIN = 3.0; //Skal måske bruges til at indtænke støj
+
+    // Select DTMF frequencies
     std::vector<std::vector<int>> dtmf;
     std::vector<int> mFrek;
-    if(useDtmf){
+
+    if (useDtmf) {
         dtmf = dtmf1;
         mFrek = mFrek1;
     }
-    else{
+    else {
         dtmf = dtmf2;
         mFrek = mFrek2;
     }
 
-    if (magnitude.size() < 2 || magnitude.size() != mFrek.size()) {
+    if (magnitude.size() != 8 || mFrek.size() != 8) {
         return -1;
     }
-    // Find største magnitude blandt de første 8 frekvenser
-    auto first = std::max_element(magnitude.begin(), magnitude.begin()+4);
 
-    // Find største magnitude blandt de sidste 8 frekvenser
-    auto second = std::max_element(magnitude.begin()+4, magnitude.end());
+    // Find largest magnitude in each frequency group
+    auto first = std::max_element(
+        magnitude.begin(),
+        magnitude.begin() + 4
+    );
 
-    // Find indeks
+    auto second = std::max_element(
+        magnitude.begin() + 4,
+        magnitude.end()
+    );
+
     int index1 = std::distance(magnitude.begin(), first);
     int index2 = std::distance(magnitude.begin(), second);
 
-    int frek1 = mFrek[index1];
-    int frek2 = mFrek[index2];
-    
-    if (magnitude[index1] < threshold || magnitude[index2] < threshold || magnitude[index1] < 0.1 || magnitude[index2] < 0.1) {
-        return -1; // Returner -1 hvis ingen af de to højeste værdier er over threshold
+    double lowPeak = magnitude[index1];
+    double highPeak = magnitude[index2];
+
+    // Find second-largest magnitude in each group
+    double secondLargestLow = 0.0;
+    double secondLargestHigh = 0.0;
+
+    for (int i = 0; i < 4; ++i) {
+        if (i != index1) {
+            secondLargestLow = std::max(
+                secondLargestLow, magnitude[i]
+            );
+        }
     }
 
-    //Finder hvilken dtmf tone der matcher de to højeste magnitude.
+    for (int i = 4; i < 8; ++i) {
+        if (i != index2) {
+            secondLargestHigh = std::max(
+                secondLargestHigh, magnitude[i]
+            );
+        }
+    }
+
+    // Check if each frequency clearly dominates its group
+    if (lowPeak <= PEAK_RATIO * secondLargestLow ||
+        highPeak <= PEAK_RATIO * secondLargestHigh) {
+        return -1;
+    }
+
+    // Check against background noise
+    // noiseRms must be calibrated and defined elsewhere!
+    constexpr double MIN_AMPLITUDE = 0.005;
+    if (lowPeak < MIN_AMPLITUDE ||
+        highPeak < MIN_AMPLITUDE) {
+        return -1;
+    }
+
+    int frek1 = mFrek[index1];
+    int frek2 = mFrek[index2];
+
+    // Find corresponding DTMF tone
     for (int i = 0; i < dtmf.size(); i++) {
         if ((dtmf[i][0] == frek1 && dtmf[i][1] == frek2) ||
             (dtmf[i][0] == frek2 && dtmf[i][1] == frek1)) {
@@ -222,7 +263,7 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
     std::vector<int> toner;
 
     const int WINDOW_SIZE = 220;
-    const int HOP_SIZE = 41;
+    const int HOP_SIZE = 11;
     int nIdBits = 2; //Hvor mange id skal høre for at aktivere.
 
     const int UdpBlockAmount = 7;
@@ -286,9 +327,9 @@ std::vector<int> DSP::listen(int samplerate, double toneDuration) {
             numberOfBlocks++;
             if(numberOfBlocks >= numberOfBlocksWanted) {
                 // Udskriv toner til terminalen
-                // for (int t : toner) {
-                //     std::cout << t << " ";
-                // }
+                for (int t : toner) {
+                     std::cout << t << " ";
+                }
                 std::cout << std::endl;
                 std::cout << "Data gemt i filen data.txt" << std::endl;
                 for (const std::vector<float>& samples : data) {

@@ -32,6 +32,7 @@ class DSP {
         int channel;
         PaStream* stream;
         std::vector<int> ID = {};
+        
 };
 
 #endif // DSP_H
