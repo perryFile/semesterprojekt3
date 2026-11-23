@@ -55,6 +55,7 @@ void listenForDTMF(){
 }
 
 void processAndExecute(){
+    //Vi skal have lavet en måde hvorpå vi kan se om vi har processeret denne pakke. evt queue?
     while(true){
         mtx.lock();
         robotID = packet[0];
