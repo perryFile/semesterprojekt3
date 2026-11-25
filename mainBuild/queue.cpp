@@ -31,4 +31,4 @@ std::optional<std::vector<std::int32_t>> Queue::pop(){
 }
 
 
-Queue::Queue(){}
+Queue::~Queue(){}

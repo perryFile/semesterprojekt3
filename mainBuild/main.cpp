@@ -25,12 +25,19 @@ const std::int32_t computerID = 4; // ID for the computer sending commands
 std::vector<int> toner = {};
 
 // Shared data structures
-PhysicalLayer pL(blocksize, samplerate, channels, {UdpID, TcpID});
+// Shared data structures
+Queue pLTodP;
+Queue dPTopL;
+Queue dPToDE;
+
+// Physical layer
+PhysicalLayer pL(pLTodP, dPTopL, blocksize, samplerate, channels, {UdpID, TcpID});
+
+// Data processing
 DataProcessing dP;
+
+// Data execution
 DataExecution dE;
-Queue pLTodP; // Queue - PhysicalLayer -> DataProcessing
-Queue dPTopL; // Queue - DataProcessing -> PhysicalLayer
-Queue dPToDE; // Queue - DataProcessing -> DataExecution
 
 
 void listenForDTMF() {
@@ -79,7 +86,10 @@ void processAndExecute() {
                 // ACK altid, også ved dublet
                 dPTopL.push(dP.ACKTcpPacket(computerID, robotID, tcp->packetNumber));
                 // Udfør kun hvis pakken er ny
-                if (!isDuplicate) dE.handleCommand(*tcp);
+                if (!isDuplicate) {
+                    const int command = dP.getCommand(*tcp);
+                    dE.handleCommand(robotID, command);
+                }
                 std::cout << "valid TCP, " << (isDuplicate ? "dublet, kun ACK" : "udført") << "\n";
             }
         } else {                                 // UDP
@@ -99,7 +109,7 @@ int main(int argc, char** argv) {
     std::thread t2(ackTCP);
     std::thread t3(processAndExecute);
 
-    while (rclcpp::ok() && !stop) std::this_thread::sleep_for(100ms);
+    while (rclcpp::ok() && !stop) {std::this_thread::sleep_for(std::chrono::milliseconds(100));}
     stop = true;
     pL.requestStop();   // Request to stop the DSP listening thread
 

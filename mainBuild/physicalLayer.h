@@ -12,7 +12,7 @@
 
 class PhysicalLayer {
     public: 
-        PhysicalLayer(int blockSize = 379, int samplerate = 8000, int channels = 1, std::vector<int> ID = {0, 1}, Queue& pLTodP, Queue& dPTopL);
+        PhysicalLayer(Queue& pLTodP, Queue& dPTopL,int blockSize = 379, int samplerate = 8000, int channels = 1, std::vector<int> ID = {0, 1});
         std::vector<std::int32_t> receiveData();
         void sendData(std::vector<std::int32_t> inputData);
         void queueData(std::vector<std::int32_t> inputData);

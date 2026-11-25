@@ -5,7 +5,6 @@ DataExecution::DataExecution()
       pub_(node_->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel", 10)) {}
 
 void DataExecution::moveRobot(float xVelocity, float zVelocity) {
-    geometry_msgs::msg::TwistStamped msg;
     msg.header.stamp = node_->now();
     msg.header.frame_id = "base_link";
     msg.twist.linear.x = xVelocity;
@@ -17,29 +16,29 @@ void DataExecution::stopRobot() {
     moveRobot(0.0f, 0.0f);
 }
 
-void DataExecution::handleCommand(const ExecMsg& msg) {
+void DataExecution::handleCommand(int robotID, int command) {
     const auto now = std::chrono::steady_clock::now();
 
-    switch (msg.commandType) {
-        case ExecMsg::commandType::None:
+    switch (command) {
+        case 0: // None
             if (now < disabledUntil) {
-                moveRobot(0.0f, 0.0f);          // Bomb aktiv
+                moveRobot(0.0f, 0.0f); // Bomb aktiv
             } else {
-                const float xVel = (inverted ? -msg.xVelocity : msg.xVelocity) * speedScale;
-                moveRobot(xVel, msg.zVelocity);
+                const float xVel = (inverted ? -baseXVelocity : baseXVelocity) * speedScale;
+                moveRobot(xVel, 0.0f); 
             }
             break;
-        case ExecMsg::commandType::Bomb:
+        case 1: // Bomb
             disabledUntil = now + std::chrono::seconds(3);
             moveRobot(0.0f, 0.0f);
             break;
-        case ExecMsg::commandType::SpeedBoost:
+        case 2: // SpeedBoost
             speedScale = 0.22f / 0.15f;         // 0.15 -> 0.22
             break;
-        case ExecMsg::commandType::InvertedControls:
+        case 3: // InvertedControls
             inverted = !inverted;
             break;
-        case ExecMsg::commandType::StopAbility:
+        case 4: // StopAbility
             speedScale = 1.0f;
             inverted = false;
             break;

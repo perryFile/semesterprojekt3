@@ -16,7 +16,7 @@ int computerIDtcp = 5;
 
 DSP dsp(blocksize, samplerate, channels, {computerIDudp, computerIDtcp});
 std::vector<int> toner = {};
-std::vector<bool> executed = {false, false};
+std::vector<bool> executed = {true, true};
 
 std::deque<std::vector<int>> queueList;
 
@@ -73,6 +73,7 @@ void player1()
                 if (lastPressedKey != 4){
                     lastPressedKey = 4;
                     dataPlayer1 = {robotIDudp, 0, 0, 0};
+std::vector<int> dataPlayer1 = {0, 0, 0, 0};
                     executed[playerNumber] = false;
                 }
                 mtx.unlock();

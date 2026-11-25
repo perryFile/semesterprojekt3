@@ -18,6 +18,7 @@ add_executable(main
     dataExecution.cpp
     dataProcessing.cpp
     physicalLayer.cpp
+    queue.cpp
 )
 add_executable(mainPlayer
     mainPlayer.cpp

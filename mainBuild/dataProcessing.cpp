@@ -2,6 +2,8 @@
 #include "dataProcessing.h"
 #include <iostream>
 
+
+
 DataProcessing::DataProcessing() {}
 
 DataProcessing::DataProcessing(const std::vector<std::int32_t>& inputData)
@@ -172,42 +174,6 @@ bool DataProcessing::crcCheck(const std::vector<std::int32_t>& inputData) const 
     return crc8(inputData, payloadLen) == received;
 }
 
-std::optional<TcpPacket> DataProcessing::decodeTcpPacket(int robotID, bool& isDuplicate) {
-    isDuplicate = false;
-
-    if (!checkId(robotID, data))       return std::nullopt;
-    if (!isValidPacket(robotID, data)) return std::nullopt;
-    if (!typeControl(data).value())    return std::nullopt;
-
-    const TcpPacket packet{
-        data[0],        // ID
-        data[1] * 16 + data[2],   // Pakkenummer
-        data[3]                 // Kommando
-    };
-    // Tjekker om den forrige pakke har samme nummer som den aktuelle pakke
-    const auto it = lastPacketNumber.find(packet.robotID);
-    if (it != lastPacketNumber.end() && it->second == packet.packetNumber) {
-        return false;
-    }
-    // Tilføjer pakken til vores stack
-    lastPacketNumber[packet.robotID] = packet.packetNumber;
-    tcpQueue.push(packet);
-    return true;
-}
-
-// Henter en pakke fra vores stak og fjerner den fra stakken efterfølgende
-std::optional<TcpPacket> DataProcessing::popTcpPacket() {
-    // Tjekker om den er tom så .front() ikke fejler. 
-    if (tcpQueue.empty()) return std::nullopt;
-
-    const TcpPacket packet = tcpQueue.front();
-    tcpQueue.pop();
-    return packet;
-}
-
-std::size_t DataProcessing::tcpQueueSize() const {
-    return tcpQueue.size();
-}
 
 
 std::vector<std::int32_t> DataProcessing::ACKTcpPacket(std::int32_t computerID, std::int32_t robotID, std::int32_t packetNumber) {
@@ -241,4 +207,8 @@ std::optional<TcpPacket> DataProcessing::decodeTcpPacket(int robotID, bool& isDu
     }
 
     return packet;
+}
+
+int DataProcessing::getCommand(const TcpPacket& packet) {
+    return packet.command;
 }

@@ -44,6 +44,7 @@ class DataProcessing {
         
         std::optional<TcpPacket> decodeTcpPacket(int robotID, bool& isDuplicate);
         std::vector<std::int32_t> ACKTcpPacket(std::int32_t computerID, std::int32_t robotID, std::int32_t packetNumber);
+        int getCommand(const TcpPacket& packet);
 
         ~DataProcessing() = default;
 
@@ -65,12 +66,6 @@ class DataProcessing {
         static constexpr float maxZVelocity = 1.0f;
         std::map<int, int> lastPacketNumber;
 
-        // Queue class references
-        Queue& pLTodP; // Reference to the queue for data from PhysicalLayer to DataProcessing
-        Queue& dPTopL; // Reference to the queue for data from DataProcessing to PhysicalLayer
-        Queue& dPTodE; // Reference to the queue for data from DataProcessing to DataExecution
-        Queue& dETodP; // Reference to the queue for data from DataExecution to DataProcessing
-
-    };
+};
 
 #endif // DATAPROCESSING_H
