@@ -39,8 +39,9 @@ void DataExecution::handleCommand(int robotID, int command) {
             inverted = !inverted;
             break;
         case 4: // StopAbility
-            speedScale = 1.0f;
-            inverted = false;
+            std::cout << "Stoppet" << std::endl;
+            stopRobot();
+            rclcpp::shutdown();
             break;
     }
 }

@@ -104,6 +104,7 @@ std::optional<bool> DataProcessing::typeControl(const std::vector<std::int32_t>&
 
 // Passer robotID med om pakken der er sendt er en TCP eller UDP
 bool DataProcessing::isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) const {
+    
     // False = UDP, true = TCP, tom = ugyldig længde
     const auto type = typeControl(inputData);
     if (!type) return false;
@@ -157,7 +158,7 @@ std::uint8_t DataProcessing::crc8(const std::vector<std::int32_t>& data, std::si
             }
         }
     }
-
+    std::cout << "CRC: " << static_cast<int>(crc) << std::endl;
     return crc;
 }
 // Sidste to toner = CRC (første er most significant).

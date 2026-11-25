@@ -60,6 +60,7 @@ void player1()
                     std::uint8_t crc = dP.crc8(dataBeforeCRC, dataBeforeCRC.size());
                     std::cout << "crc: " << crc <<std::endl;
                     dataPlayer1 = {robotIDtcp, pakkenr/16, pakkenr%16, 4, crc/16, crc%16};
+                    std::cout << "player1Data: " << dataPlayer1[0] << ", " << dataPlayer1[1] << ", " << dataPlayer1[2] << ", " << dataPlayer1[3] << std::endl;
                     executed[playerNumber] = false;
                 }
                 pakkenr++;
@@ -79,7 +80,6 @@ void player1()
                 if (lastPressedKey != 4){
                     lastPressedKey = 4;
                     dataPlayer1 = {robotIDudp, 0, 0, 0};
-std::vector<int> dataPlayer1 = {0, 0, 0, 0};
                     executed[playerNumber] = false;
                 }
                 mtx.unlock();
@@ -157,14 +157,20 @@ void player2()
 
 }
 
+
+
 void playerInput()
 {
     const int player1Udp = 0;
     const int player1Tcp = 1;
     const int player2Udp = 2;
     const int player2Tcp = 3;
+
     std::vector<int> lastPressedKey = {-1, -1};
     Controller input;
+
+    int pakkenrPlayer1 = 0;
+    int pakkenrPlayer2 = 0;
 
     while (true) {
         const Key key = input.readKey();
@@ -174,13 +180,44 @@ void playerInput()
 
         switch (key) {
             case Key::Up:    player = 0; pressedKey = 1; data = {player1Udp, 7, 7, 7}; break;
-            case Key::Down:  player = 0; pressedKey = 2; data = {player1Tcp, 0, 0, 15, 11, 15}; break;
+
+            case Key::Down:
+                player = 0; pressedKey = 2;
+                {
+                    std::vector<std::int32_t> dataBeforeCRC = {
+                        player1Tcp, pakkenrPlayer1/16, pakkenrPlayer1%16, 4
+                    };
+                    std::uint8_t crc = dP.crc8(dataBeforeCRC, dataBeforeCRC.size());
+                    std::cout << "crc: " << (int)crc << std::endl;
+
+                    data = {player1Tcp, pakkenrPlayer1/16, pakkenrPlayer1%16, 4, crc/16, crc%16};
+                    std::cout << "data: " << data[0] << ", " << data[1] << ", " << data[2] << ", " << data[3] << ", " << data[4] << ", " << data[5] << std::endl;
+                    pakkenrPlayer1++;
+                }
+                break;
+
             case Key::Left:  player = 0; pressedKey = 3; data = {player1Udp, 15, 15, 15}; break;
             case Key::Right: player = 0; pressedKey = 4; data = {player1Udp, 0, 0, 0}; break;
+
             case Key::W:     player = 1; pressedKey = 1; data = {player2Udp, 7, 7, 7}; break;
-            case Key::S:     player = 1; pressedKey = 2; data = {player2Tcp, 0, 0, 15, 11, 15}; break;
+
+            case Key::S:
+                player = 1; pressedKey = 2;
+                {
+                    std::vector<std::int32_t> dataBeforeCRC = {
+                        player2Tcp, pakkenrPlayer2/16, pakkenrPlayer2%16, 4
+                    };
+                    std::uint8_t crc = dP.crc8(dataBeforeCRC, dataBeforeCRC.size());
+                    std::cout << "crc: " << (int)crc << std::endl;
+
+                    data = {player2Tcp, pakkenrPlayer2/16, pakkenrPlayer2%16, 4, crc/16, crc%16};
+                    pakkenrPlayer2++;
+                }
+                break;
+
             case Key::A:     player = 1; pressedKey = 3; data = {player2Udp, 15, 15, 15}; break;
             case Key::D:     player = 1; pressedKey = 4; data = {player2Udp, 0, 0, 0}; break;
+
             case Key::Other:
                 std::cout << "Other key pressed\n";
                 continue;
@@ -194,9 +231,11 @@ void playerInput()
                 executed[player] = false;
             }
         }
+
         std::cout << (player == 0 ? "Player 1 key pressed\n" : "Player 2 key pressed\n");
     }
 }
+
 
 void queue()
 {
