@@ -36,14 +36,13 @@ PhysicalLayer pL(pLTodP, dPTopL, blocksize, samplerate, channels, {UdpID, TcpID}
 // Data processing
 DataProcessing dP;
 
-// Data execution
-DataExecution dE;
+
 
 
 void listenForDTMF() {
     const double toneDuration = 0.07;
     while (!stop) {
-        std::vector<int> toner = pL.listen(samplerate, toneDuration);
+        std::vector<int> toner = pL.listen(samplerate, toneDuration);   
         if (!toner.empty()) {
             pLTodP.push(std::vector<std::int32_t>(toner.begin(), toner.end()));
         }
@@ -60,7 +59,7 @@ void ackTCP() {
         }
     }
 }
-void processAndExecute() {
+void processAndExecute(DataExecution& dE) {
     while (!stop) {
         auto maybePacket = pLTodP.TryPop();
         if (!maybePacket || maybePacket->empty()) {
@@ -89,6 +88,7 @@ void processAndExecute() {
                 if (!isDuplicate) {
                     const int command = dP.getCommand(*tcp);
                     dE.handleCommand(robotID, command);
+                   
                 }
                 std::cout << "valid TCP, " << (isDuplicate ? "dublet, kun ACK" : "udført") << "\n";
             }
@@ -105,9 +105,12 @@ void processAndExecute() {
 int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
 
+    // Data execution
+    DataExecution dE;
+
     std::thread t1(listenForDTMF);
     std::thread t2(ackTCP);
-    std::thread t3(processAndExecute);
+    std::thread t3(processAndExecute, std::ref(dE));
 
     while (rclcpp::ok() && !stop) {std::this_thread::sleep_for(std::chrono::milliseconds(100));}
     stop = true;
@@ -116,5 +119,7 @@ int main(int argc, char** argv) {
     t1.join(); t2.join(); t3.join();
     dE.stopRobot();
     rclcpp::shutdown();
+    
 
+    return 0;
 }

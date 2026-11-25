@@ -41,6 +41,8 @@ class DataProcessing {
         std::optional<bool> typeControl(const std::vector<std::int32_t>& inputData) const;
         bool isValidPacket(int robotID, const std::vector<std::int32_t>& inputData) const;
         bool crcCheck(const std::vector<std::int32_t>& inputData) const;
+        static std::uint8_t crc8(const std::vector<std::int32_t>& data, std::size_t count);
+
         
         std::optional<TcpPacket> decodeTcpPacket(int robotID, bool& isDuplicate);
         std::vector<std::int32_t> ACKTcpPacket(std::int32_t computerID, std::int32_t robotID, std::int32_t packetNumber);
@@ -49,7 +51,6 @@ class DataProcessing {
         ~DataProcessing() = default;
 
     private:
-        static std::uint8_t crc8(const std::vector<std::int32_t>& data, std::size_t count);
 
         const std::vector<RobotPacketType> robotIDtype = {
             {0, false},  // id 0: robot 1, UDP

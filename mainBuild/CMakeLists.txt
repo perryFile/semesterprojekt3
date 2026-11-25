@@ -25,6 +25,7 @@ add_executable(mainPlayer
     DSP.cpp
     init.cpp
     controller.cpp
+    dataProcessing.cpp
 )
 
 # PortAudio stier

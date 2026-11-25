@@ -1,5 +1,6 @@
 #include "DSP.h"
 #include "controller.h"
+#include "dataProcessing.h"
 #include <iostream>
 #include <vector>
 #include <thread>
@@ -8,6 +9,7 @@
 #include <chrono>
 #include <utility>
 
+
 int blocksize = 379; 
 int samplerate = 8000; 
 int channels = 1; 
@@ -15,6 +17,7 @@ int computerIDudp = 4;
 int computerIDtcp = 5;
 
 DSP dsp(blocksize, samplerate, channels, {computerIDudp, computerIDtcp});
+DataProcessing dP;
 std::vector<int> toner = {};
 std::vector<bool> executed = {true, true};
 
@@ -53,7 +56,10 @@ void player1()
                 std::cout << "Down arrow pressed" << std::endl;
                 if (lastPressedKey != 2){
                     lastPressedKey = 2;
-                    dataPlayer1 = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11, 15};
+                    std::vector<std::int32_t> dataBeforeCRC = {robotIDtcp, pakkenr/16, pakkenr%16};
+                    std::uint8_t crc = dP.crc8(dataBeforeCRC, dataBeforeCRC.size());
+                    std::cout << "crc: " << crc <<std::endl;
+                    dataPlayer1 = {robotIDtcp, pakkenr/16, pakkenr%16, 4, crc/16, crc%16};
                     executed[playerNumber] = false;
                 }
                 pakkenr++;
@@ -116,7 +122,7 @@ void player2()
                 mtx.lock();
                 if (lastPressedKey != 2){
                     lastPressedKey = 2;
-                    dataPlayer2 = {robotIDtcp, pakkenr/16, pakkenr%16, 15, 11, 15};
+                    dataPlayer2 = {robotIDtcp, pakkenr/16, pakkenr%16, 4, 11, 15};
                     executed[playerNumber] = false;
                 }
                 pakkenr++;
