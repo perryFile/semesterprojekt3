@@ -80,7 +80,6 @@ void processAndExecute(DataExecution& dE) {
         }
 
        if (dP.typeControl(packet).value()) {   // TCP
-            std::cout << "din mor" << std::endl;
             bool isDuplicate = false;
             if (auto tcp = dP.decodeTcpPacket(robotID, isDuplicate)) {
                 // ACK altid, også ved dublet
